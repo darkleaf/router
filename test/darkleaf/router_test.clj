@@ -1,6 +1,6 @@
 (ns darkleaf.router-test
   (:require [clojure.test :refer :all]
-            [darkleaf.router :refer [route scope build-handler build-matcher]]))
+            [darkleaf.router :refer :all]))
 
 (def routes
   (flatten
@@ -11,6 +11,7 @@
     (route :legacy-page
            :vars '#{slug}
            :pattern '{:segments ["pages" (slug :guard #{"old-page"})], :request-method :get}
+           :template '{:segments ["pages" slug], :request-method :get}
            :handler identity)
     (route :page
            :vars '#{slug}
@@ -48,6 +49,25 @@
 
       {:segments ["api" "pages" "contacts"], :request-method :patch, :headers {"token" "secret"}}
       :update-page [:api] {:slug "contacts", :api-token "secret"})))
+
+(deftest test-request-for
+  (let [request-for (build-reverse-matcher routes)]
+    (are [r-name r-scope r-params request] (= (request-for r-name r-scope r-params)
+                                              request)
+       :main-page [] {}
+       {:segments [], :request-method :get}
+
+       :page [] {:slug "about"}
+       {:segments ["pages" "about"], :request-method :get}
+
+       :legacy-page [] {:slug "old-page"}
+       {:segments ["pages" "old-page"], :request-method :get}
+
+       :create-page [:api] {:api-token "secret"}
+       {:segments ["api" "pages"], :request-method :post, :headers {"token" "secret"}}
+
+       :update-page [:api] {:slug "contacts", :api-token "secret"}
+       {:segments ["api" "pages" "contacts"], :request-method :patch, :headers {"token" "secret"}})))
 
 (deftest test-handler
   (let [matcher (build-matcher routes)

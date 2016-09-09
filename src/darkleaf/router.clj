@@ -3,22 +3,29 @@
   (:require [clojure.string :refer [split]]))
 
 (defrecord Route [name
-                  vars pattern
+                  vars pattern template
                   handler scope])
 
 (defn route
-  [name & {:keys [vars pattern
-                  handler]
+  [name & {:keys [vars pattern template handler]
            :or {vars #{}
-                pattern {}}}]
+                pattern {}
+                template pattern}}]
   {:pre [(and
           (keyword? name)
           (set? vars)
           (map? pattern)
+          (map? template)
           (fn? handler))]}
   (Route. name
-          vars pattern
+          vars pattern template
           handler '()))
+
+(defn route-predicate [r-name r-scope]
+  (fn [route]
+    (and
+     (= (:name route) r-name)
+     (= (:scope route) r-scope))))
 
 (defn- merge-segments-shapes [parent-segments child-segments]
   (into parent-segments child-segments))
@@ -45,20 +52,23 @@
     (assoc result-map-pattern :segments result-segments)))
 
 (defn scope [s-name
-             {:keys [vars pattern]
+             {:keys [vars pattern template]
               :or {vars #{}
-                   pattern {}}}
+                   pattern {}
+                   template pattern}}
              & routes]
   {:pre [(and
           (keyword? s-name)
           (set? vars)
-          (map? pattern))]}
+          (map? pattern)
+          (map? template))]}
   (map
    (fn [route]
      (-> route
          (update :scope conj s-name)
          (update :vars into vars)
-         (update :pattern #(merge-request-shapes pattern %))))
+         (update :pattern #(merge-request-shapes pattern %))
+         (update :template #(merge-request-shapes template %))))
    (flatten routes)))
 
 (defn- build-params-map [route]
@@ -94,3 +104,18 @@
                                :route-params params
                                :matched-route route)]
       (route-handler req-with-info))))
+
+(defn- keyword->symbol [key]
+  (-> key name symbol))
+
+(defn build-reverse-matcher [routes]
+  (fn request-for
+    ([r-name] (request-for r-name '() {}))
+    ([r-name r-scope] (request-for r-name r-scope {}))
+    ([r-name r-scope r-params]
+     (let [predicate (route-predicate r-name r-scope)
+           route (first (filter predicate routes))]
+       (assert (= (:vars route) (set (map keyword->symbol (keys r-params)))))
+       (eval
+        `(let [~@(mapcat (fn [[k v]] [(keyword->symbol k) v]) r-params)]
+           ~(:template route)))))))
