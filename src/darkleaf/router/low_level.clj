@@ -1,6 +1,5 @@
-(ns darkleaf.router
-  (:require [clojure.core.match :refer [match]])
-  (:require [clojure.string :refer [split]]))
+(ns darkleaf.router.low-level
+  (:require [clojure.core.match :refer [match]]))
 
 (defrecord Route [name
                   vars pattern template
@@ -20,12 +19,6 @@
   (Route. name
           vars pattern template
           handler '()))
-
-(defn route-predicate [r-name r-scope]
-  (fn [route]
-    (and
-     (= (:name route) r-name)
-     (= (:scope route) r-scope))))
 
 (defn- merge-segments-shapes [parent-segments child-segments]
   (into parent-segments child-segments))
@@ -91,22 +84,6 @@
       [req#]
       ~@(let [routes (var-get (resolve routes-var-name))]
           (mapcat route->match-clause routes)))))
-
-(defn- assoc-our-keys [req]
-  (assoc req :segments (vec (rest (split (:uri req) #"/")))))
-
-(defn build-handler [matcher]
-  (fn [-req]
-    (let [req (assoc-our-keys -req)
-          [route params] (matcher req)
-          route-handler (:handler route)
-          req-with-info (assoc req
-                               :route-params params
-                               :matched-route route)]
-      (route-handler req-with-info))))
-
-(defn- keyword->symbol [key]
-  (-> key name symbol))
 
 (defmacro build-reverse-matcher [routes-var-name]
   (let [r-params-symbol (gensym 'r-params)]
