@@ -108,14 +108,15 @@
 (defn- keyword->symbol [key]
   (-> key name symbol))
 
-(defn build-reverse-matcher [routes]
-  (fn request-for
-    ([r-name] (request-for r-name '() {}))
-    ([r-name r-scope] (request-for r-name r-scope {}))
-    ([r-name r-scope r-params]
-     (let [predicate (route-predicate r-name r-scope)
-           route (first (filter predicate routes))]
-       (assert (= (:vars route) (set (map keyword->symbol (keys r-params)))))
-       (eval
-        `(let [~@(mapcat (fn [[k v]] [(keyword->symbol k) v]) r-params)]
-           ~(:template route)))))))
+(defmacro build-reverse-matcher [routes-var-name]
+  (let [r-params-symbol (gensym 'r-params)]
+    `(fn [r-name# r-scope# ~r-params-symbol]
+       (case [r-name# r-scope#]
+         ~@(let [routes (var-get (resolve routes-var-name))]
+             (mapcat
+              (fn [route]
+                (list
+                 [(:name route) (:scope route)]
+                 `(let [{:keys [~@(:vars route)]} ~r-params-symbol]
+                       ~(:template route))))
+              routes))))))
