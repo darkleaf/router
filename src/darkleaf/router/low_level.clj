@@ -97,3 +97,6 @@
                  `(let [{:keys [~@(:vars route)]} ~r-params-symbol]
                        ~(:template route))))
               routes))))))
+
+(defn combine-routes [& routes]
+  (flatten routes))

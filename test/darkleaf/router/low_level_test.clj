@@ -4,33 +4,31 @@
             [darkleaf.router.low-level :refer :all]))
 
 (def routes
-  (flatten
-   (list
-    (route :main-page
-           :pattern '{:segments [], :request-method :get}
-           :handler identity)
-    (route :legacy-page
-           :vars '#{slug}
-           :pattern '{:segments ["pages" (slug :guard #{"old-page"})], :request-method :get}
-           :template '{:segments ["pages" slug], :request-method :get}
-           :handler identity)
-    (route :page
-           :vars '#{slug}
-           :pattern '{:segments ["pages" slug], :request-method :get}
-           :handler identity)
-    (scope :api
-           {:vars '#{api-token}
-            :pattern '{:segments ["api"], :headers {"token" api-token}}}
-           (route :create-page
-                  :pattern '{:segments ["pages"], :request-method :post}
-                  :handler identity)
-           (route :update-page
-                  :vars '#{slug}
-                  :pattern '{:segments ["pages" slug], :request-method :patch}
-                  :handler identity))
-    (route :not-found
-           :handler identity))))
-
+  (combine-routes
+   (route :main-page
+          :pattern '{:segments [], :request-method :get}
+          :handler identity)
+   (route :legacy-page
+          :vars '#{slug}
+          :pattern '{:segments ["pages" (slug :guard #{"old-page"})], :request-method :get}
+          :template '{:segments ["pages" slug], :request-method :get}
+          :handler identity)
+   (route :page
+          :vars '#{slug}
+          :pattern '{:segments ["pages" slug], :request-method :get}
+          :handler identity)
+   (scope :api
+          {:vars '#{api-token}
+           :pattern '{:segments ["api"], :headers {"token" api-token}}}
+          (route :create-page
+                 :pattern '{:segments ["pages"], :request-method :post}
+                 :handler identity)
+          (route :update-page
+                 :vars '#{slug}
+                 :pattern '{:segments ["pages" slug], :request-method :patch}
+                 :handler identity))
+   (route :not-found
+          :handler identity)))
 
 (deftest bidirectional-matching
   (let [matcher (build-matcher routes)
