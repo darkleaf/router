@@ -1,52 +1,52 @@
 (ns darkleaf.router-test
   (:require [clojure.test :refer :all]
+            [clojure.template :refer [do-template]]
             [darkleaf.router :refer :all]))
 
-(defn- build-fake-action [action-name]
-  (fn [req] {:action action-name, :req req}))
+#_(def routes
+    (build-routes
+     (root (:index pages-controller))
+     (resources :pages pages-controller)
+     (resource :account account-controller
+               (resources :pages accoutn-pages-controller))
+     (section :taxonomy
+              (wildcard (build-fake-action :taxonomy)))
+     (section :admin
+              :middleware admin-middleware
+              (root (:index admin-pages-controller))
+              (resources :pages 'page-id admin-pages-controller
+                         (get-action :foo  identity)
+                         (post-action identity)
+                         (resources :comments admin-page-comments-controller)))
 
-(def pages-controller {:index (build-fake-action :index)
-                       :show (build-fake-action :show)})
+     (not-found (build-fake-action :not-found))))
 
-(def account-controller {:show (build-fake-action :show)
-                         :update (build-fake-action :update)
-                         :edit (build-fake-action :edit)})
-
-(def admin-pages-controller {:index (build-fake-action :index)
-                             :create (build-fake-action :create)
-                             :new (build-fake-action :new)
-                             :update (build-fake-action :update)
-                             :edit (build-fake-action :edit)
-                             :destroy (build-fake-action :destroy)})
-
-(def admin-page-commments-controller {:index (build-fake-action :index)
-                                      :create (build-fake-action :create)
-                                      :new (build-fake-action :new)
-                                      :update (build-fake-action :update)
-                                      :edit (build-fake-action :edit)
-                                      :destroy (build-fake-action :destroy)})
-
-(defn admin-middleware [handler]
-  (fn [req]
-    (-> req
-        (assoc :admin true)
-        handler)))
-
-(def routes
+(def one-level-routes
   (build-routes
-   (root (:index pages-controller))
-   (resources :pages pages-controller)
-   (resource :account account-controller)
-   (section :taxonomy
-            (wildcard (build-fake-action :taxonomy)))
-   (section :admin
-            :middleware admin-middleware
-            (root (:index admin-pages-controller))
-            (resources :pages admin-pages-controller)
-            (nested-for :pages 'page-id
-                        (resources :comments admin-page-comments-controller)))
-   (not-found (build-fake-action :not-found))))
+   (root identity)
+   (action :get :about identity)
+   (wildcard :get :taxonomy identity)
+   #_(not-found identity)))
 
+(deftest test-one-level-routes
+  (let [handler (build-handler one-level-routes)
+        request-for (build-request-for one-level-routes)]
+    (do-template [req-name req-scope req-params request]
+                 (testing req-name
+                   (testing "direct"
+                     (let [response (handler request)]
+                       (is (= req-name (get-in response [:matched-route :name])))))
+                   (testing "reverse"
+                     (let [computed-request (request-for req-name req-scope req-params)]
+                       (is (= request (dissoc computed-request :segments))))))
+                 :root '[] {}
+                 {:uri "/", :request-method :get}
+
+                 :about '[] {}
+                 {:uri "/about", :request-method :get}
+
+                 :taxonomy '[] {:rest ["animal" "cat"]}
+                 {:uri "/animal/cat", :request-method :get})))
 
 #_(deftest test-handler
     (let [handler (build-handler matcher)
