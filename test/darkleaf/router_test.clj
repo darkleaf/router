@@ -21,38 +21,56 @@
 
      (not-found (build-fake-action :not-found))))
 
-(def one-level-routes
+(def routes
   (build-routes
    (root identity)
    (action :get :about identity)
-   (wildcard :get :taxonomy identity)
-   #_(not-found identity)))
+   (section :taxonomy
+            (action :get :foo identity)
+            (wildcard :get identity))
+   (resources :pages {:index identity
+                      :show identity})
+   (resource :account {:show identity
+                       :edit identity
+                       :update identity})
+   (not-found identity)))
 
-(deftest test-one-level-routes
-  (let [handler (build-handler one-level-routes)
-        request-for (build-request-for one-level-routes)]
+(deftest test-routes
+  (let [handler (build-handler routes)
+        request-for (build-request-for routes)]
     (do-template [req-name req-scope req-params request]
                  (testing req-name
                    (testing "direct"
                      (let [response (handler request)]
-                       (is (= req-name (get-in response [:matched-route :name])))))
+                       (is (= req-name (get-in response [:matched-route :name])))
+                       (is (= req-params (:route-params response)))))
                    (testing "reverse"
                      (let [computed-request (request-for req-name req-scope req-params)]
-                       (is (= request (dissoc computed-request :segments))))))
-                 :root '[] {}
+                       (is (= request computed-request)))))
+                 :root [] {}
                  {:uri "/", :request-method :get}
 
-                 :about '[] {}
+                 :about [] {}
                  {:uri "/about", :request-method :get}
 
-                 :taxonomy '[] {:rest ["animal" "cat"]}
-                 {:uri "/animal/cat", :request-method :get})))
+                 :wildcard [:taxonomy] {:wildcard ["animal" "cat"]}
+                 {:uri "/taxonomy/animal/cat", :request-method :get}
 
-#_(deftest test-handler
-    (let [handler (build-handler matcher)
-          request {:uri "/pages/about", :request-method :get}
-          response (handler request)]
-      (is (= :page (get-in response [:matched-route :name])))
-      (is (= ["pages" "about"] (:segments response)))
-      (is (contains? response :matched-route))
-      (is (= {:slug "about"} (:route-params response)))))
+                 :index [:pages] {}
+                 {:uri "/pages", :request-method :get}
+
+                 :show [:pages] {:id "some-id"}
+                 {:uri "/pages/some-id", :request-method :get}
+
+                 :show [:account] {}
+                 {:uri "/account", :request-method :get}
+
+                 :edit [:account] {}
+                 {:uri "/account/edit", :request-method :get}
+
+                 :update [:account] {}
+                 {:uri "/account", :request-method :patch})
+    (testing :not-found
+      (let [request {:uri "/not-found/page", :request-method :get}
+            response (handler request)]
+        (is (= :not-found (get-in response [:matched-route :name])))))))

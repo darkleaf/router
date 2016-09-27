@@ -1,5 +1,6 @@
 (ns darkleaf.router.low-level
-  (:require [clojure.core.match :refer [match]]))
+  (:require [clojure.core.match :refer [match]]
+            [backtick :refer [syntax-quote-fn]]))
 
 (defrecord Route [name
                   vars pattern template
@@ -7,9 +8,7 @@
 
 (defn route
   [name & {:keys [vars pattern template handler]
-           :or {vars #{}
-                pattern {}
-                template pattern}}]
+           :or {vars #{}}}]
   {:pre [(and
           (keyword? name)
           (set? vars)
@@ -46,9 +45,7 @@
 
 (defn scope [s-name
              {:keys [vars pattern template]
-              :or {vars #{}
-                   pattern {}
-                   template pattern}}
+              :or {vars #{}}}
              & routes]
   {:pre [(and
           (keyword? s-name)
@@ -95,7 +92,7 @@
                 (list
                  [(:name route) (:scope route)]
                  `(let [{:keys [~@(:vars route)]} ~r-params-symbol]
-                       ~(:template route))))
+                    ~(syntax-quote-fn (:template route)))))
               routes))))))
 
 (defn combine-routes [& routes]
