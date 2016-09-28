@@ -31,11 +31,6 @@
              (resources :pages 'page-id {:index fake-handler}))
    (not-found fake-handler)))
 
-#_{:middlewares []
-   :member-widdlewares []
-   :index identity
-   :snow identity}
-
 (deftest test-routes
   (let [handler (build-handler routes)
         request-for (build-request-for routes)]
@@ -113,3 +108,25 @@
       (let [request {:uri "/not-found/page", :request-method :get}
             response (handler request)]
         (is (= :not-found (get-in response [:matched-route :name])))))))
+
+#_{:middlewares []
+   :member-widdlewares []
+   :index identity
+   :snow identity}
+
+(def routes-with-middleware
+  (build-routes
+   (wrap (fn [handler]
+           (fn [req]
+             (-> req
+                 (assoc :test-key :test-value)
+                 handler)))
+         (action :some-action fake-handler)
+         (action :foo fake-handler))))
+
+(deftest test-routes-with-middleware
+ (let [handler (build-handler routes-with-middleware)]
+   (testing "wrap"
+     (let [request {:uri "/some-action", :request-method :get}
+           response (handler request)]
+       (is (= :test-value (:test-key response)))))))

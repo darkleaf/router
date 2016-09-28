@@ -142,6 +142,11 @@
                         :handler (:destroy controller))))
          inner-routes))
 
+(defn wrap [middleware & routes]
+  (map
+   #(update % :handler middleware)
+   routes))
+
 (defn- prepare-request [req]
   (assoc req :segments (vec (rest (split (:uri req) #"/")))))
 

@@ -70,9 +70,9 @@
 (defn- build-pattern-row [route]
   [(:pattern route)])
 
-(defn- route->match-clause [route]
+(defn- route->match-clause [idx route routes-var-name]
   (let [pattern-row (build-pattern-row route)
-        action [route (build-params-map route)]]
+        action `[(nth ~routes-var-name ~idx) ~(build-params-map route)]]
     (list pattern-row action)))
 
 (defmacro build-matcher [routes-var-name]
@@ -80,7 +80,10 @@
      (match
       [req#]
       ~@(let [routes (var-get (resolve routes-var-name))]
-          (mapcat route->match-clause routes)))))
+          (apply concat
+                 (map-indexed
+                  (fn [idx route] (route->match-clause idx route routes-var-name))
+                  routes))))))
 
 (defmacro build-reverse-matcher [routes-var-name]
   (let [r-params-symbol (gensym 'r-params)]
@@ -96,4 +99,6 @@
               routes))))))
 
 (defn combine-routes [& routes]
-  (flatten routes))
+  (-> routes
+      flatten
+      vec))
