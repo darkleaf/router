@@ -16,29 +16,17 @@ You can create github issue with your question.
 
 ## TODO
 
-* Вложенные ресурсы
-  ```
-  /pages/1/comments/2
-  ```
-* Дополнительные экшены (в качестве исключения)
-  ```
-  /pages/1/clone
-  ```
-* Дополнительные экшены для коллекций (в качестве исключения)
-  ```
-  /pages/archived
-  ```
+* Handler middlewares
+ * resource/resources middlewares
 * Секции/области
-  ```
-  /ru/pages/about
-  /en/pages/about
-  /pages/about #with default locale
-  ```
+ * /ru/pages/about
+ * /en/pages/about
+ * /pages/about #with redirect to default locale
 * query и body? params
-  ```
-  /pages?filter=active
-  ```
-* Документация на английском
+ * /pages?filter=active
+* Документация кода и readme на английском
+* ClojureScript
+* core.spec
 
 ## License
 
