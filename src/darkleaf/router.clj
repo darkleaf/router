@@ -5,11 +5,14 @@
 (defn build-routes [& routes]
   (combine-routes routes))
 
-(defn action [request-method action-name handler]
-  (route action-name
-         :pattern {:request-method request-method, :segments [(name action-name)]}
-         :template {:request-method request-method, :segments [(name action-name)]}
-         :handler handler))
+(defn action
+  ([action-name handler]
+   (action :get action-name handler))
+  ([request-method action-name handler]
+   (route action-name
+          :pattern {:request-method request-method, :segments [(name action-name)]}
+          :template {:request-method request-method, :segments [(name action-name)]}
+          :handler handler)))
 
 (defn wildcard [request-method handler]
   (route :wildcard
@@ -36,93 +39,108 @@
           :template {:segments [(name s-name)]}}
          routes))
 
-(defn resources [rs-name controller]
-  (section rs-name
-           (cond-> '()
-             (contains? controller :index)
-             (conj (route :index
-                          :pattern {:request-method :get}
-                          :template {:request-method :get}
-                          :handler (:index controller)))
+(defn- collection-routes [rs-name controller additional-routes]
+  (scope rs-name
+         {:pattern {:segments [(name rs-name)]}
+          :template {:segments [(name rs-name)]}}
+         (cond-> []
+           (contains? controller :index)
+           (conj (route :index
+                        :pattern {:request-method :get, :segments []}
+                        :template {:request-method :get, :segments []}
+                        :handler (:index controller)))
 
-             (contains? controller :new)
-             (conj (route :new
-                          :pattern {:request-method :get, :segments ["new"]}
-                          :template {:request-method :get, :segments ["new"]}
-                          :handler (:new controller)))
+           (contains? controller :new)
+           (conj (route :new
+                        :pattern {:request-method :get, :segments ["new"]}
+                        :template {:request-method :get, :segments ["new"]}
+                        :handler (:new controller)))
 
-             (contains? controller :create)
-             (conj (route :create
-                          :pattern {:request-method :post}
-                          :template {:request-method :post}
-                          :handler (:create controller)))
+           (contains? controller :create)
+           (conj (route :create
+                        :pattern {:request-method :post, :segments []}
+                        :template {:request-method :post, :segments []}
+                        :handler (:create controller))))
+         additional-routes))
 
-             (contains? controller :show)
-             (conj (route :show
-                          :vars '#{id}
-                          :pattern '{:request-method :get, :segments [id]}
-                          :template '{:request-method :get, :segments [~id]}
-                          :handler (:show controller)))
+(defn- member-routes [rs-name id-symbol controller additional-routes]
+  (scope rs-name
+         {:vars #{id-symbol}
+          :pattern {:segments [(name rs-name) id-symbol]}
+          :template {:segments [(name rs-name) (list 'clojure.core/unquote id-symbol)]}} ;;#=> '{:segments ["page" ~page-id]} for rs-name - :page, id-symbol - 'page-id
+         (cond-> []
+           (contains? controller :show)
+           (conj (route :show
+                        :pattern {:request-method :get, :segments []}
+                        :template {:request-method :get, :segments []}
+                        :handler (:show controller)))
 
-             (contains? controller :edit)
-             (conj (route :edit
-                          :vars '#{id}
-                          :pattern '{:request-method :get, :segments [id "edit"]}
-                          :template '{:request-method :get, :segments [~id "edit"]}
-                          :handler (:edit controller)))
+           (contains? controller :edit)
+           (conj (route :edit
+                        :pattern {:request-method :get, :segments ["edit"]}
+                        :template {:request-method :get, :segments ["edit"]}
+                        :handler (:edit controller)))
 
-             (contains? controller :update)
-             (conj (route :update
-                          :vars '#{id}
-                          :pattern '{:request-method :patch, :segments [id]}
-                          :template '{:request-method :patch, :segments [~id]}
-                          :handler (:update controller)))
+           (contains? controller :update)
+           (conj (route :update
+                        :pattern {:request-method :patch, :segments []}
+                        :template {:request-method :patch, :segments []}
+                        :handler (:update controller)))
 
-             (contains? controller :destroy)
-             (conj (route :destroy
-                          :vars '#{id}
-                          :pattern '{:request-method :delete, :segments [id]}
-                          :template '{:request-method :delete, :segments [~id]}
-                          :handler (:destroy controller))))))
+           (contains? controller :destroy)
+           (conj (route :destroy
+                        :pattern {:request-method :delete, :segments []}
+                        :template {:request-method :delete, :segments []}
+                        :handler (:destroy controller))))
+         additional-routes))
 
-(defn resource [r-name controller]
-  (section r-name
-           (cond-> '()
-             (contains? controller :new)
-             (conj (route :new
-                          :pattern {:request-method :get, :segments ["new"]}
-                          :template {:request-method :get, :segments ["new"]}
-                          :handler (:new controller)))
+(defn resources [rs-name id-symbol controller
+                 & {collection-rs :collection, member-rs :member
+                    :or {collection-rs [], member-rs []}}]
+  [(collection-routes rs-name controller collection-rs)
+   (member-routes rs-name id-symbol controller member-rs)])
 
-             (contains? controller :create)
-             (conj (route :create
-                          :pattern {:request-method :post}
-                          :template {:request-method :post}
-                          :handler (:create controller)))
+(defn resource [r-name controller & inner-routes]
+  (scope r-name
+         {:pattern {:segments [(name r-name)]}
+          :template {:segments [(name r-name)]}}
+         (cond-> '()
+           (contains? controller :new)
+           (conj (route :new
+                        :pattern {:request-method :get, :segments ["new"]}
+                        :template {:request-method :get, :segments ["new"]}
+                        :handler (:new controller)))
 
-             (contains? controller :show)
-             (conj (route :show
-                          :pattern '{:request-method :get}
-                          :template '{:request-method :get}
-                          :handler (:show controller)))
+           (contains? controller :create)
+           (conj (route :create
+                        :pattern {:request-method :post}
+                        :template {:request-method :post}
+                        :handler (:create controller)))
 
-             (contains? controller :edit)
-             (conj (route :edit
-                          :pattern '{:request-method :get, :segments ["edit"]}
-                          :template '{:request-method :get, :segments ["edit"]}
-                          :handler (:edit controller)))
+           (contains? controller :show)
+           (conj (route :show
+                        :pattern '{:request-method :get}
+                        :template '{:request-method :get}
+                        :handler (:show controller)))
 
-             (contains? controller :update)
-             (conj (route :update
-                          :pattern '{:request-method :patch}
-                          :template '{:request-method :patch}
-                          :handler (:update controller)))
+           (contains? controller :edit)
+           (conj (route :edit
+                        :pattern '{:request-method :get, :segments ["edit"]}
+                        :template '{:request-method :get, :segments ["edit"]}
+                        :handler (:edit controller)))
 
-             (contains? controller :destroy)
-             (conj (route :destroy
-                          :pattern '{:request-method :delete}
-                          :template '{:request-method :delete}
-                          :handler (:destroy controller))))))
+           (contains? controller :update)
+           (conj (route :update
+                        :pattern '{:request-method :patch}
+                        :template '{:request-method :patch}
+                        :handler (:update controller)))
+
+           (contains? controller :destroy)
+           (conj (route :destroy
+                        :pattern '{:request-method :delete}
+                        :template '{:request-method :delete}
+                        :handler (:destroy controller))))
+         inner-routes))
 
 (defn- prepare-request [req]
   (assoc req :segments (vec (rest (split (:uri req) #"/")))))
