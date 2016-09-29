@@ -3,39 +3,39 @@
             [clojure.template :refer [do-template]]
             [darkleaf.router :refer :all]))
 
-(def fake-handler identity)
-
 (def routes
   (build-routes
-   (root fake-handler)
-   (action :get :about fake-handler)
+   (root identity)
+   (action :get :about identity)
    (section :taxonomy
-            (wildcard :get fake-handler))
-   (resources :pages 'page-id {:index fake-handler
-                               :new fake-handler
-                               :create fake-handler
-                               :show fake-handler
-                               :edit fake-handler
-                               :update fake-handler
-                               :destroy fake-handler}
+            (wildcard :get identity))
+   (resources :pages 'page-id {:index identity
+                               :new identity
+                               :create identity
+                               :show identity
+                               :edit identity
+                               :update identity
+                               :destroy identity}
               :collection
-              [(action :archived fake-handler)]
+              [(action :archived identity)]
               :member
-              [(resources :comments 'comment-id {:index fake-handler})])
-   (resource :account {:new fake-handler
-                       :create fake-handler
-                       :show fake-handler
-                       :edit fake-handler
-                       :update fake-handler
-                       :destroy fake-handler}
-             (resources :pages 'page-id {:index fake-handler}))
-   (not-found fake-handler)))
+              [(resources :comments 'comment-id {:index identity})])
+   (resource :account {:new identity
+                       :create identity
+                       :show identity
+                       :edit identity
+                       :update identity
+                       :destroy identity}
+             (resources :pages 'page-id {:index identity}))
+   (guard :locale #{"ru" "en"}
+          (action :localized-page identity))
+   (not-found identity)))
 
 (deftest test-routes
   (let [handler (build-handler routes)
         request-for (build-request-for routes)]
     (do-template [req-name req-scope req-params request]
-                 (testing (str req-name " " req-scope)
+                 (testing (:uri request)
                    (testing "direct"
                      (let [response (handler request)]
                        (is (= req-name (get-in response [:matched-route :name])))
@@ -103,30 +103,82 @@
 
                  ;; inner account routes
                  :index [:account :pages] {}
-                 {:uri "/account/pages", :request-method :get})
+                 {:uri "/account/pages", :request-method :get}
+
+                 ;; guard locale
+                 :localized-page [:locale] {:locale "en"}
+                 {:uri "/en/localized-page", :request-method :get}
+
+                 :localized-page [:locale] {:locale "ru"}
+                 {:uri "/ru/localized-page", :request-method :get})
     (testing :not-found
       (let [request {:uri "/not-found/page", :request-method :get}
             response (handler request)]
-        (is (= :not-found (get-in response [:matched-route :name])))))))
+        (is (= :not-found (get-in response [:matched-route :name])))))
+    (testing :guard
+      (let [request {:uri "/it/localized-page", :request-method :get}
+            response (handler request)]
+        (is (not= :localized-page (get-in response [:matched-route :name])))))))
 
-#_{:middlewares []
-   :member-widdlewares []
-   :index identity
-   :snow identity}
+;; ---------- wrap-handler testing ----------
+
+(defn find-page [slug]
+  (get
+   {"about" {:id 1, :slug "about"}
+    "contacts" {:id 2, :slug "contacts"}}
+   slug))
+
+(defn find-page-middleware [handler]
+  (fn [req]
+    (-> req
+        (assoc-in [:models :page] (find-page (get-in req [:route-params :page-slug])))
+        handler)))
+
+(defn test-middleware [handler]
+  (fn [req]
+    (-> req
+        (assoc :test-key :test-value)
+        handler)))
 
 (def routes-with-middleware
   (build-routes
-   (wrap (fn [handler]
-           (fn [req]
-             (-> req
-                 (assoc :test-key :test-value)
-                 handler)))
-         (action :some-action fake-handler)
-         (action :foo fake-handler))))
+   (wrap-handler test-middleware
+                 (action :some-action identity))
+   (resources :pages 'page-slug {:middleware test-middleware
+                                 :member-middleware find-page-middleware
+                                 :index identity
+                                 :show identity}
+              :member
+              [(action :member-action identity)]
+              :collection
+              [(action :collection-action identity)])
+   (resource :account {:middleware test-middleware
+                       :show identity}
+             (action :additional-action identity))))
 
 (deftest test-routes-with-middleware
- (let [handler (build-handler routes-with-middleware)]
-   (testing "wrap"
-     (let [request {:uri "/some-action", :request-method :get}
-           response (handler request)]
-       (is (= :test-value (:test-key response)))))))
+  (let [handler (build-handler routes-with-middleware)]
+    (testing "wrap"
+      (let [request {:uri "/some-action", :request-method :get}
+            response (handler request)]
+        (is (= :test-value (:test-key response)))))
+    (testing "resoure(s) middleware"
+      (do-template [request]
+                   (testing request
+                     (let [response (handler request)]
+                       (is (= :test-value (:test-key response)))))
+                   {:uri "/pages/about", :request-method :get}
+                   {:uri "/pages/contacts/member-action", :request-method :get}
+                   {:uri "/pages", :request-method :get}
+                   {:uri "/pages/collection-action", :request-method :get}
+
+                   {:uri "/account", :request-method :get}
+                   {:uri "/account/additional-action", :request-method :get}))
+
+    (testing "resources member middleware"
+      (do-template [request model]
+                   (testing request
+                     (let [response (handler request)]
+                       (is (= model (get-in response [:models :page])))))
+                   {:uri "/pages/about", :request-method :get} {:id 1, :slug "about"}
+                   {:uri "/pages/contacts/member-action", :request-method :get} {:id 2, :slug "contacts"}))))

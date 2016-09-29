@@ -16,17 +16,15 @@ You can create github issue with your question.
 
 ## TODO
 
-* Handler middlewares
- * resource/resources middlewares
-* Секции/области
- * /ru/pages/about
- * /en/pages/about
- * /pages/about #with redirect to default locale
-* query и body? params
- * /pages?filter=active
+* :segments поместить в неймспейс и не пускать его в handler
+* request-for проверять, что полученный request будет обработан этим же роутом
+* необратимые роуты, вроде not-found
+* helpers ??
+ * link-to
+  * query params /pages?filter=active
 * Документация кода и readme на английском
 * ClojureScript
-* core.spec
+* clojure.spec
 
 ## License
 
