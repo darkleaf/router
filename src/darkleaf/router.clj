@@ -47,6 +47,11 @@
             :template {:segments [(list 'clojure.core/unquote name-symbol)]}}
            routes)))
 
+(defn wrap-handler [middleware & routes]
+  (map
+   #(update % :handler middleware)
+   (flatten routes)))
+
 (defn- collection-routes [rs-name controller additional-routes]
   (wrap-handler
    (get controller :middleware identity)
@@ -157,11 +162,6 @@
                          :template '{:request-method :delete}
                          :handler (:destroy controller))))
           inner-routes)))
-
-(defn wrap-handler [middleware & routes]
-  (map
-   #(update % :handler middleware)
-   (flatten routes)))
 
 ;; ---------- builders ----------
 

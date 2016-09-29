@@ -1,5 +1,7 @@
 # Router
 
+[![Build Status](https://travis-ci.org/darkleaf/router.svg?branch=master)](https://travis-ci.org/darkleaf/router)
+
 *UNSTABLE*
 
 Ring роутинг поверх core.match. Работает в обе стороны. Вдохновлен Ruby on rails.
