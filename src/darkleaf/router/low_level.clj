@@ -33,15 +33,15 @@
              child-map-pattern))
 
 (defn- merge-request-shapes [parent child]
-  (let [parent-segments (get parent :segments [])
-        child-segments (get child :segments [])
+  (let [parent-segments (get parent ::segments [])
+        child-segments (get child ::segments [])
 
-        parent-map (dissoc parent :segments)
-        child-map (dissoc child :segments)
+        parent-map (dissoc parent ::segments)
+        child-map (dissoc child ::segments)
 
         result-segments (merge-segments-shapes parent-segments child-segments)
         result-map-pattern (merge-map-shapes parent-map child-map)]
-    (assoc result-map-pattern :segments result-segments)))
+    (assoc result-map-pattern ::segments result-segments)))
 
 (defn scope [s-name
              {:keys [vars pattern template]

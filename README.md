@@ -18,7 +18,6 @@ You can create github issue with your question.
 
 ## TODO
 
-* :segments поместить в неймспейс и не пускать его в handler
 * request-for проверять, что полученный request будет обработан этим же роутом
 * необратимые роуты, вроде not-found
 * helpers ??

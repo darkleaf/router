@@ -1,5 +1,5 @@
 (ns darkleaf.router
-  (:require [darkleaf.router.low-level :refer :all])
+  (:require [darkleaf.router.low-level :refer :all, :as ll])
   (:require [clojure.string :refer [split join]]))
 
 (defn build-routes [& routes]
@@ -10,21 +10,21 @@
    (action :get action-name handler))
   ([request-method action-name handler]
    (route action-name
-          :pattern {:request-method request-method, :segments [(name action-name)]}
-          :template {:request-method request-method, :segments [(name action-name)]}
+          :pattern {:request-method request-method, ::ll/segments [(name action-name)]}
+          :template {:request-method request-method, ::ll/segments [(name action-name)]}
           :handler handler)))
 
 (defn wildcard [request-method handler]
   (route :wildcard
          :vars '#{wildcard}
-         :pattern {:request-method request-method, :segments '[& wildcard]}
-         :template {:request-method request-method, :segments '[~@wildcard]}
+         :pattern {:request-method request-method, ::ll/segments '[& wildcard]}
+         :template {:request-method request-method, ::ll/segments '[~@wildcard]}
          :handler handler))
 
 (defn root [handler]
   (route :root
-         :pattern {:request-method :get, :segments []}
-         :template {:request-method :get, :segments []}
+         :pattern {:request-method :get, ::ll/segments []}
+         :template {:request-method :get, ::ll/segments []}
          :handler handler))
 
 (defn not-found [handler]
@@ -35,16 +35,16 @@
 
 (defn section [s-name & routes]
   (scope s-name
-         {:pattern {:segments [(name s-name)]}
-          :template {:segments [(name s-name)]}}
+         {:pattern {::ll/segments [(name s-name)]}
+          :template {::ll/segments [(name s-name)]}}
          routes))
 
 (defn guard [g-name predicate & routes]
   (let [name-symbol (-> g-name name symbol)]
     (scope g-name
            {:vars #{name-symbol}
-            :pattern {:segments [(list name-symbol :guard predicate)]}
-            :template {:segments [(list 'clojure.core/unquote name-symbol)]}}
+            :pattern {::ll/segments [(list name-symbol :guard predicate)]}
+            :template {::ll/segments [(list 'clojure.core/unquote name-symbol)]}}
            routes)))
 
 (defn wrap-handler [middleware & routes]
@@ -56,25 +56,25 @@
   (wrap-handler
    (get controller :middleware identity)
    (scope rs-name
-          {:pattern {:segments [(name rs-name)]}
-           :template {:segments [(name rs-name)]}}
+          {:pattern {::ll/segments [(name rs-name)]}
+           :template {::ll/segments [(name rs-name)]}}
           (cond-> []
             (contains? controller :index)
             (conj (route :index
-                         :pattern {:request-method :get, :segments []}
-                         :template {:request-method :get, :segments []}
+                         :pattern {:request-method :get, ::ll/segments []}
+                         :template {:request-method :get, ::ll/segments []}
                          :handler (:index controller)))
 
             (contains? controller :new)
             (conj (route :new
-                         :pattern {:request-method :get, :segments ["new"]}
-                         :template {:request-method :get, :segments ["new"]}
+                         :pattern {:request-method :get, ::ll/segments ["new"]}
+                         :template {:request-method :get, ::ll/segments ["new"]}
                          :handler (:new controller)))
 
             (contains? controller :create)
             (conj (route :create
-                         :pattern {:request-method :post, :segments []}
-                         :template {:request-method :post, :segments []}
+                         :pattern {:request-method :post, ::ll/segments []}
+                         :template {:request-method :post, ::ll/segments []}
                          :handler (:create controller))))
           additional-routes)))
 
@@ -84,32 +84,31 @@
          (get controller :middleware identity))
    (scope rs-name
           {:vars #{id-symbol}
-           :pattern {:segments [(name rs-name) id-symbol]}
-           :template {:segments [(name rs-name) (list 'clojure.core/unquote id-symbol)]}}
-          ;;#=> '{:segments ["page" ~page-id]} for rs-name - :page, id-symbol - 'page-id
+           :pattern {::ll/segments [(name rs-name) id-symbol]}
+           :template {::ll/segments [(name rs-name) (list 'clojure.core/unquote id-symbol)]}}
           (cond-> []
             (contains? controller :show)
             (conj (route :show
-                         :pattern {:request-method :get, :segments []}
-                         :template {:request-method :get, :segments []}
+                         :pattern {:request-method :get, ::ll/segments []}
+                         :template {:request-method :get, ::ll/segments []}
                          :handler (:show controller)))
 
             (contains? controller :edit)
             (conj (route :edit
-                         :pattern {:request-method :get, :segments ["edit"]}
-                         :template {:request-method :get, :segments ["edit"]}
+                         :pattern {:request-method :get, ::ll/segments ["edit"]}
+                         :template {:request-method :get, ::ll/segments ["edit"]}
                          :handler (:edit controller)))
 
             (contains? controller :update)
             (conj (route :update
-                         :pattern {:request-method :patch, :segments []}
-                         :template {:request-method :patch, :segments []}
+                         :pattern {:request-method :patch, ::ll/segments []}
+                         :template {:request-method :patch, ::ll/segments []}
                          :handler (:update controller)))
 
             (contains? controller :destroy)
             (conj (route :destroy
-                         :pattern {:request-method :delete, :segments []}
-                         :template {:request-method :delete, :segments []}
+                         :pattern {:request-method :delete, ::ll/segments []}
+                         :template {:request-method :delete, ::ll/segments []}
                          :handler (:destroy controller))))
           additional-routes)))
 
@@ -123,13 +122,13 @@
   (wrap-handler
    (get controller :middleware identity)
    (scope r-name
-          {:pattern {:segments [(name r-name)]}
-           :template {:segments [(name r-name)]}}
+          {:pattern {::ll/segments [(name r-name)]}
+           :template {::ll/segments [(name r-name)]}}
           (cond-> '()
             (contains? controller :new)
             (conj (route :new
-                         :pattern {:request-method :get, :segments ["new"]}
-                         :template {:request-method :get, :segments ["new"]}
+                         :pattern {:request-method :get, ::ll/segments ["new"]}
+                         :template {:request-method :get, ::ll/segments ["new"]}
                          :handler (:new controller)))
 
             (contains? controller :create)
@@ -146,8 +145,8 @@
 
             (contains? controller :edit)
             (conj (route :edit
-                         :pattern '{:request-method :get, :segments ["edit"]}
-                         :template '{:request-method :get, :segments ["edit"]}
+                         :pattern '{:request-method :get, ::ll/segments ["edit"]}
+                         :template '{:request-method :get, ::ll/segments ["edit"]}
                          :handler (:edit controller)))
 
             (contains? controller :update)
@@ -165,18 +164,24 @@
 
 ;; ---------- builders ----------
 
-(defn- prepare-request [req]
-  (assoc req :segments (vec (rest (split (:uri req) #"/")))))
+(defn- request-before-match [req]
+  (-> req
+      (assoc ::ll/segments (vec (rest (split (:uri req) #"/"))))))
+
+(defn- request-after-match [req & {:as stuff}]
+  (-> req
+      (dissoc ::ll/segments)
+      (merge stuff)))
 
 (defn matcher->handler [matcher]
   (fn [original-req]
-    (let [req (prepare-request original-req)
+    (let [req (request-before-match original-req)
           [route params] (matcher req)
           route-handler (:handler route)
-          req-with-info (assoc req
-                               :route-params params
-                               :matched-route route)]
-      (route-handler req-with-info))))
+          result-req (request-after-match req
+                                          :route-params params
+                                          :matched-route route)]
+      (route-handler result-req))))
 
 (defmacro build-handler [routes-var-name]
   `(let [matcher# (build-matcher ~routes-var-name)]
@@ -184,8 +189,8 @@
 
 (defn- prepare-reverse-request [req]
   (-> req
-      (assoc :uri (str "/" (join "/" (:segments req))))
-      (dissoc :segments)))
+      (assoc :uri (str "/" (join "/" (::ll/segments req))))
+      (dissoc ::ll/segments)))
 
 ;;TODO check with matcher
 (defn matchers->request-for [matcher reverse-matcher]
