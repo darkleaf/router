@@ -119,10 +119,13 @@
 
                  :not-found [:locale] {:requested-segments ["wrong" "path"], :locale "en"}
                  {:uri "/en/wrong/path"})
-    (testing :guard
+    (testing "wrong guard cases"
       (let [request {:uri "/it/localized-page", :request-method :get}
             response (handler request)]
-        (is (not= :localized-page (get-in response [:matched-route :name])))))))
+        (is (not= :localized-page (get-in response [:matched-route :name]))))
+      (is (thrown-with-msg? java.lang.IllegalArgumentException
+                            #"Can't match the same route for given params\. Matched :not-found in scope \(\)\."
+                            (request-for :localized-page [:locale] {:locale "wrong-locale"}))))))
 
 ;; ---------- wrap-handler testing ----------
 

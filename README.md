@@ -18,7 +18,6 @@ You can create github issue with your question.
 
 ## TODO
 
-* request-for проверять, что полученный request будет обработан этим же роутом
 * refactoring
  * vars & locals naming
  * error messages

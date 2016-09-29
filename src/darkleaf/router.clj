@@ -193,13 +193,19 @@
       (assoc :uri (str "/" (join "/" (::ll/segments req))))
       (dissoc ::ll/segments)))
 
-;;TODO check with matcher
 (defn matchers->request-for [matcher reverse-matcher]
   (letfn [(request-for
             ([r-name r-scope] (request-for r-name r-scope {}))
             ([r-name r-scope r-params]
-             (-> (reverse-matcher r-name r-scope r-params)
-                 prepare-reverse-request)))]
+             (let [raw-request (reverse-matcher r-name r-scope r-params)
+                   [matched-route _] (matcher raw-request)
+                   request (prepare-reverse-request raw-request)]
+               (if (and (= r-name (:name matched-route))
+                        (= r-scope (:scope matched-route)))
+                 request
+                 (throw (java.lang.IllegalArgumentException.
+                         (str "Can't match the same route for given params. "
+                              "Matched " (:name matched-route) " in scope " (:scope matched-route) ".")))))))]
     request-for))
 
 (defmacro build-request-for [routes-var-name]
