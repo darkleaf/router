@@ -29,8 +29,9 @@
 
 (defn not-found [handler]
   (route :not-found
-         :pattern {}
-         :template {}
+         :vars '#{requested-segments}
+         :pattern {::ll/segments '[& requested-segments]}
+         :template {::ll/segments '[~@requested-segments]}
          :handler handler))
 
 (defn section [s-name & routes]

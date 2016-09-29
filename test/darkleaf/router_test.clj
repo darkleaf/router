@@ -28,7 +28,8 @@
                        :destroy identity}
              (resources :pages 'page-id {:index identity}))
    (guard :locale #{"ru" "en"}
-          (action :localized-page identity))
+          (action :localized-page identity)
+          (not-found identity))
    (not-found identity)))
 
 (deftest test-routes
@@ -110,11 +111,14 @@
                  {:uri "/en/localized-page", :request-method :get}
 
                  :localized-page [:locale] {:locale "ru"}
-                 {:uri "/ru/localized-page", :request-method :get})
-    (testing :not-found
-      (let [request {:uri "/not-found/page", :request-method :get}
-            response (handler request)]
-        (is (= :not-found (get-in response [:matched-route :name])))))
+                 {:uri "/ru/localized-page", :request-method :get}
+
+                 ;; not found
+                 :not-found [] {:requested-segments ["not-found" "page"]}
+                 {:uri "/not-found/page"}
+
+                 :not-found [:locale] {:requested-segments ["wrong" "path"], :locale "en"}
+                 {:uri "/en/wrong/path"})
     (testing :guard
       (let [request {:uri "/it/localized-page", :request-method :get}
             response (handler request)]
