@@ -1,6 +1,7 @@
 # Router
 
 [![Build Status](https://travis-ci.org/darkleaf/router.svg?branch=master)](https://travis-ci.org/darkleaf/router)
+[![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
 Bidirectional Ring router. REST oriented. It uses the core.match internally.
 
