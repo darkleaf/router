@@ -13,7 +13,7 @@
          (set? vars)
          (map? pattern)
          (map? template)
-         (fn? handler)]}
+         (ifn? handler)]}
   (Route. name
           vars pattern template
           handler '()))
