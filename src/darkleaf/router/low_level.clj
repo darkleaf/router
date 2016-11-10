@@ -9,12 +9,11 @@
 (defn route
   [name & {:keys [vars pattern template handler]
            :or {vars #{}}}]
-  {:pre [(and
-          (keyword? name)
-          (set? vars)
-          (map? pattern)
-          (map? template)
-          (fn? handler))]}
+  {:pre [(keyword? name)
+         (set? vars)
+         (map? pattern)
+         (map? template)
+         (fn? handler)]}
   (Route. name
           vars pattern template
           handler '()))
@@ -47,11 +46,10 @@
              {:keys [vars pattern template]
               :or {vars #{}}}
              & routes]
-  {:pre [(and
-          (keyword? s-name)
-          (set? vars)
-          (map? pattern)
-          (map? template))]}
+  {:pre [(keyword? s-name)
+         (set? vars)
+         (map? pattern)
+         (map? template)]}
   (map
    (fn [route]
      (-> route
