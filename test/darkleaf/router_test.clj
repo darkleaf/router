@@ -1,3 +1,115 @@
+(ns darkleaf.router-test
+  (:require [clojure.test :refer [deftest testing is]]
+            [darkleaf.router :as r]
+            [clojure.template :refer [do-template]]))
+
+(deftest resources
+  (let [pages-controller {:index   (fn [req] (assoc req :action :index))
+                          :show    (fn [req] (assoc req :action :show))
+                          :new     (fn [req] (assoc req :action :new))
+                          :create  (fn [req] (assoc req :action :create))
+                          :edit    (fn [req] (assoc req :action :edit))
+                          :update  (fn [req] (assoc req :action :update))
+                          :destroy (fn [req] (assoc req :action :destroy))}
+        pages (r/resources :pages :page-id pages-controller)
+        handler (r/make-handler pages)]
+    (do-template [action-name scope params request]
+                 (testing (name action-name)
+                   (testing "direct"
+                     (let [response (handler request)
+                           actual-action-name (:action response)]
+                       (is (= action-name actual-action-name)))))
+
+                 :index [:pages] {}
+                 {:uri "/pages", :request-method :get}
+
+                 :new [:pages] {}
+                 {:uri "/pages/new", :request-method :get}
+
+                 :create [:pages] {}
+                 {:uri "/pages", :request-method :post}
+
+                 :show [:pages] {:page-id "some-id"}
+                 {:uri "/pages/some-id", :request-method :get}
+
+                 :edit [:pages] {:page-id "about"}
+                 {:uri "/pages/about/edit", :request-method :get}
+
+                 :update [:pages] {:page-id "contacts"}
+                 {:uri "/pages/contacts", :request-method :patch}
+
+                 :destroy [:pages] {:page-id "wrong"}
+                 {:uri "/pages/wrong", :request-method :delete})))
+
+
+;; (deftest app
+;;   (let [app (ll/app
+;;              (reify ll/Processable
+;;                (process [_ _] nil))
+;;              (reify ll/Processable
+;;                (process [_ _] "ok"))
+;;              (reify ll/Processable
+;;                (process [_ _] "last: not ok")))]
+;;     (testing "detect matched action"
+;;       (let [resp (ll/process app {})]
+;;         (is (= "ok" resp))))))
+
+;; (deftest action
+;;   (let [action (ll/action :foo
+;;                           :handler (fn [_] "foo is ok")
+;;                           :preprocessor (fn [req]
+;;                                           (match req
+;;                                                  {:segments (["foo"] :seq)} req
+;;                                                  :else nil)))]
+;;     (testing "matched"
+;;       (let [req {:segments '("foo")}
+;;             resp (ll/process action req)]
+;;         (is (= "foo is ok" resp))))
+;;     (testing "not found"
+;;       (let [req {}
+;;             resp (ll/process action req)]
+;;         (is (nil? resp))))))
+
+;; (deftest scope
+;;   (let [scope (ll/scope :foo
+;;                         {:preprocessor
+;;                          (fn [req]
+;;                            (match req
+;;                                   {:segments (["foo" & _] :seq)}
+;;                                   (update req :segments pop)
+;;                                   :else nil))}
+;;                         (reify ll/Processable
+;;                           (process [_ _] nil))
+;;                         (reify ll/Processable
+;;                           (process [_ _] "ok"))
+;;                         (reify ll/Processable
+;;                           (process [_ _] "last: not ok")))]
+;;     (testing "scope not found"
+;;       (let [req {:segments '("wrong" "smth")}
+;;             resp (ll/process scope req)]
+;;         (is (nil? resp))))
+;;     (testing "matched"
+;;       (let [req {:segments '("foo" "smth")}
+;;             resp (ll/process scope req)]
+;;         (is (= "ok" resp))))))
+
+;; (deftest wrapper
+;;   (let [wrapper (ll/wrapper {:preprocessor
+;;                              #(assoc % :test-key :test-val)}
+;;                             (reify ll/Processable
+;;                               (process [_ _] nil))
+;;                             (reify ll/Processable
+;;                               (process [_ req] (:test-key req))))]
+;;     (testing "matched"
+;;       (let [req {}
+;;             resp (ll/process wrapper req)]
+;;         (is (= :test-val resp))))))
+
+
+
+
+
+
 ;; (ns darkleaf.router-test
 ;;   (:require [clojure.test :refer :all]
 ;;             [clojure.template :refer [do-template]]
