@@ -4,22 +4,26 @@
             [clojure.template :refer [do-template]]))
 
 (deftest resources
-  (let [pages-controller {:index   (fn [req] (assoc req :action :index))
-                          :show    (fn [req] (assoc req :action :show))
-                          :new     (fn [req] (assoc req :action :new))
-                          :create  (fn [req] (assoc req :action :create))
-                          :edit    (fn [req] (assoc req :action :edit))
-                          :update  (fn [req] (assoc req :action :update))
-                          :destroy (fn [req] (assoc req :action :destroy))}
+  (let [pages-controller {:index   (fn [req] req)
+                          :show    (fn [req] req)
+                          :new     (fn [req] req)
+                          :create  (fn [req] req)
+                          :edit    (fn [req] req)
+                          :update  (fn [req] req)
+                          :destroy (fn [req] req)}
         pages (r/resources :pages :page-id pages-controller)
-        handler (r/make-handler pages)]
+        handler (r/make-handler pages)
+        request-for (r/make-request-for pages)]
     (do-template [action-name scope params request]
                  (testing (name action-name)
                    (testing "direct"
-                     (let [response (handler request)
-                           actual-action-name (:action response)]
-                       (is (= action-name actual-action-name)))))
-
+                     (let [response (handler request)]
+                       (is (= action-name (::r/action response)))
+                       (is (= scope       (::r/scope response)))
+                       (is (= params      (::r/params response)))))
+                   (testing "reverse"
+                     (let [calculated-request (request-for action-name scope params)]
+                       (is (= request calculated-request)))))
                  :index [:pages] {}
                  {:uri "/pages", :request-method :get}
 
