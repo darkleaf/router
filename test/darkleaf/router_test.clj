@@ -11,7 +11,7 @@
                           :edit    (fn [req] req)
                           :update  (fn [req] req)
                           :destroy (fn [req] req)}
-        pages (r/resources :pages :page-id pages-controller)
+        pages (r/resources :pages :page pages-controller)
         handler (r/make-handler pages)
         request-for (r/make-request-for pages)]
     (do-template [action-name scope params request]
@@ -33,16 +33,16 @@
                  :create [:pages] {}
                  {:uri "/pages", :request-method :post}
 
-                 :show [:pages] {:page-id "some-id"}
+                 :show [:page] {:page-id "some-id"}
                  {:uri "/pages/some-id", :request-method :get}
 
-                 :edit [:pages] {:page-id "about"}
+                 :edit [:page] {:page-id "about"}
                  {:uri "/pages/about/edit", :request-method :get}
 
-                 :update [:pages] {:page-id "contacts"}
+                 :update [:page] {:page-id "contacts"}
                  {:uri "/pages/contacts", :request-method :patch}
 
-                 :destroy [:pages] {:page-id "wrong"}
+                 :destroy [:page] {:page-id "wrong"}
                  {:uri "/pages/wrong", :request-method :delete})))
 
 
