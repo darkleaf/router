@@ -37,18 +37,9 @@
             (fill-impl)
             (some-fill children)))))
 
-#_(defn section [id & children]
-   {:pre [(keyword? id)
-          (some #(satisfies? Item %) children)]}
-   (let [segment (name id)
-         handle-impl (fn [req]
-                       (when (= segment (peek (::segments req)))
-                         (-> req
-                             (update ::segments pop))))
-         fill-impl (fn [req]
-                     (-> req
-                         (update ::segments conj segment)))]
-     (Scope. id handle-impl fill-impl children)))
+(defn- scope [id handle-impl fill-impl children]
+  (let [children (remove nil? children)]
+    (Scope. id handle-impl fill-impl children)))
 
 (defrecord Action [id handle-impl fill-impl handler]
   Item
@@ -84,9 +75,22 @@
                          (update ::segments conj segment)))]
      (Action. id handle-impl fill-impl handler))))
 
+;; ~~~~~~~~~~~ Scopes ~~~~~~~~~~
+
+(defn section [id & children]
+ {:pre [(keyword? id)
+        (every? #(or (nil? %) (satisfies? Item %)) children)]}
+ (let [segment (name id)
+       handle-impl (fn [req]
+                     (when (= segment (peek (::segments req)))
+                       (update req ::segments pop)))
+       fill-impl (fn [req]
+                   (update req ::segments conj segment))]
+   (scope id handle-impl fill-impl children)))
+
 ;; ~~~~~~~~~~ Resources ~~~~~~~~~~
 
-(defn- resources-collection-scope [plural-name segment & children]
+(defn- resources-collection-scope [scope-id segment & children]
   (let [handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (::segments req)))
@@ -96,7 +100,7 @@
                     (fn [req]
                       (update req ::segments conj segment))
                     identity)]
-    (Scope. plural-name handle-impl fill-impl children)))
+    (scope scope-id handle-impl fill-impl children)))
 
 (defn- resources-member-scope [plural-name singular-name segment & children]
   (let [id-key (keyword (str (name singular-name) "-id"))
@@ -129,10 +133,12 @@
                     (fn [req]
                       (let [id (get-in req [::params id-key])]
                         (update req ::segments conj id))))]
-    (Scope. singular-name handle-impl fill-impl children)))
+    (scope singular-name handle-impl fill-impl children)))
 
-(defn resources [plural-name singular-name controller & {:keys [segment]
-                                                         :or {segment (name plural-name)}}]
+(defn resources [plural-name singular-name controller
+                 & {:keys [segment nested]
+                    :or {segment (name plural-name)
+                         nested []}}]
   (let [index-action   (when-let [handler (:index controller)]
                          (action :index :get handler))
         new-action     (when-let [handler (:new controller)]
@@ -150,18 +156,59 @@
         destroy-action (when-let [handler (:destroy controller)]
                          (action :destroy :delete handler))]
     (composite
-     (apply resources-collection-scope plural-name segment
-            (remove nil?
-                    [index-action
-                     new-action
-                     create-action]))
+     (resources-collection-scope plural-name segment
+                                 index-action)
+     (resources-collection-scope singular-name segment
+                                 new-action
+                                 create-action)
      (apply resources-member-scope plural-name singular-name segment
-            (remove nil?
-                    [show-action
-                     edit-action
-                     update-action
-                     put-action
-                     destroy-action])))))
+            (into nested
+                  [show-action
+                   edit-action
+                   update-action
+                   put-action
+                   destroy-action])))))
+
+;; ~~~~~~~~~~ Resource ~~~~~~~~~~
+
+(defn- resource-scope [scope-id segment & children]
+  (let [handle-impl (if segment
+                      (fn [req]
+                        (when (= segment (peek (::segments req)))
+                          (update req ::segments pop)))
+                      identity)
+        fill-impl (if segment
+                    (fn [req]
+                      (update req ::segments conj segment))
+                    identity)]
+    (scope scope-id handle-impl fill-impl children)))
+
+(defn resource [singular-name controller & {:keys [segment nested]
+                                            :or {segment (name singular-name)
+                                                 nested []}}]
+  (let [new-action     (when-let [handler (:new controller)]
+                         (action :new :get "new" handler))
+        create-action  (when-let [handler (:create controller)]
+                         (action :create :post handler))
+        show-action    (when-let [handler (:show controller)]
+                         (action :show :get handler))
+        edit-action    (when-let [handler (:edit controller)]
+                         (action :edit :get "edit" handler))
+        update-action  (when-let [handler (:update controller)]
+                         (action :update :patch handler))
+        put-action     (when-let [handler (:put controller)]
+                         (action :put :put handler))
+        destroy-action (when-let [handler (:destroy controller)]
+                         (action :destroy :delete handler))]
+    (apply resource-scope singular-name segment
+           new-action
+           create-action
+           show-action
+           edit-action
+           update-action
+           put-action
+           destroy-action
+           nested)))
 
 ;; ~~~~~~~~~~ Helpers ~~~~~~~~~~
 

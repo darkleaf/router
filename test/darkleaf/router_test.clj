@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest testing is]]
             [darkleaf.router :as r]))
 
-(defn testing-route [routes action-id scope params request]
+(defn route-testing [routes action-id scope params request]
   (testing (str "action " action-id " "
                 "in scope " scope " "
                 "with params " params)
@@ -17,6 +17,8 @@
             calculated-request (request-for action-id scope params)]
         (is (= request calculated-request))))))
 
+;; ~~~~~~~~~~ Resources ~~~~~~~~~~
+
 (deftest resources
   (let [pages-controller {:index   (fn [req] req)
                           :show    (fn [req] req)
@@ -27,22 +29,22 @@
                           :put     (fn [req] req)
                           :destroy (fn [req] req)}
         pages (r/resources :pages :page pages-controller)
-        testing-pages (partial testing-route pages)]
-    (testing-pages :index [:pages] {}
+        pages-testing (partial route-testing pages)]
+    (pages-testing :index [:pages] {}
                    {:uri "/pages", :request-method :get})
-    (testing-pages :new [:pages] {}
+    (pages-testing :new [:page] {}
                    {:uri "/pages/new", :request-method :get})
-    (testing-pages :create [:pages] {}
+    (pages-testing :create [:page] {}
                    {:uri "/pages", :request-method :post})
-    (testing-pages :show [:page] {:page-id "some-id"}
+    (pages-testing :show [:page] {:page-id "some-id"}
                    {:uri "/pages/some-id", :request-method :get})
-    (testing-pages :edit [:page] {:page-id "some-id"}
+    (pages-testing :edit [:page] {:page-id "some-id"}
                    {:uri "/pages/some-id/edit", :request-method :get})
-    (testing-pages :update [:page] {:page-id "some-id"}
+    (pages-testing :update [:page] {:page-id "some-id"}
                    {:uri "/pages/some-id", :request-method :patch})
-    (testing-pages :put [:page] {:page-id "some-id"}
+    (pages-testing :put [:page] {:page-id "some-id"}
                    {:uri "/pages/some-id", :request-method :put})
-    (testing-pages :destroy [:page] {:page-id "some-id"}
+    (pages-testing :destroy [:page] {:page-id "some-id"}
                    {:uri "/pages/some-id", :request-method :delete})))
 
 (deftest resources-without-segment
@@ -56,43 +58,111 @@
                           :destroy (fn [req] req)}
         pages (r/resources :pages :page pages-controller
                            :segment false)
-        testing-pages (partial testing-route pages)]
-    (testing-pages :index [:pages] {}
+        pages-testing (partial route-testing pages)]
+    (pages-testing :index [:pages] {}
                    {:uri "", :request-method :get})
-    (testing-pages :new [:pages] {}
+    (pages-testing :new [:page] {}
                    {:uri "/new", :request-method :get})
-    (testing-pages :create [:pages] {}
+    (pages-testing :create [:page] {}
                    {:uri "", :request-method :post})
-    (testing-pages :show [:page] {:page-id "some-id"}
+    (pages-testing :show [:page] {:page-id "some-id"}
                    {:uri "/some-id", :request-method :get})
-    (testing-pages :edit [:page] {:page-id "some-id"}
+    (pages-testing :edit [:page] {:page-id "some-id"}
                    {:uri "/some-id/edit", :request-method :get})
-    (testing-pages :update [:page] {:page-id "some-id"}
+    (pages-testing :update [:page] {:page-id "some-id"}
                    {:uri "/some-id", :request-method :patch})
-    (testing-pages :put [:page] {:page-id "some-id"}
+    (pages-testing :put [:page] {:page-id "some-id"}
                    {:uri "/some-id", :request-method :put})
-    (testing-pages :destroy [:page] {:page-id "some-id"}
+    (pages-testing :destroy [:page] {:page-id "some-id"}
                    {:uri "/some-id", :request-method :delete})))
 
-;; (deftest scope
-;;   (let [scope (ll/scope :foo
-;;                         {:preprocessor
-;;                          (fn [req]
-;;                            (match req
-;;                                   {:segments (["foo" & _] :seq)}
-;;                                   (update req :segments pop)
-;;                                   :else nil))}
-;;                         (reify ll/Processable
-;;                           (process [_ _] nil))
-;;                         (reify ll/Processable
-;;                           (process [_ _] "ok"))
-;;                         (reify ll/Processable
-;;                           (process [_ _] "last: not ok")))]
-;;     (testing "scope not found"
-;;       (let [req {:segments '("wrong" "smth")}
-;;             resp (ll/process scope req)]
-;;         (is (nil? resp))))
-;;     (testing "matched"
-;;       (let [req {:segments '("foo" "smth")}
-;;             resp (ll/process scope req)]
-;;         (is (= "ok" resp))))))
+;; ~~~~~~~~~~ Resource ~~~~~~~~~~
+
+(deftest resource
+  (let [star-controller {:show    (fn [req] req)
+                         :new     (fn [req] req)
+                         :create  (fn [req] req)
+                         :edit    (fn [req] req)
+                         :update  (fn [req] req)
+                         :put     (fn [req] req)
+                         :destroy (fn [req] req)}
+        star (r/resource :star star-controller)
+        star-testing (partial route-testing star)]
+    (star-testing :new [:star] {}
+                  {:uri "/star/new", :request-method :get})
+    (star-testing :create [:star] {}
+                  {:uri "/star", :request-method :post})
+    (star-testing :show [:star] {}
+                  {:uri "/star", :request-method :get})
+    (star-testing :edit [:star] {}
+                  {:uri "/star/edit", :request-method :get})
+    (star-testing :update [:star] {}
+                  {:uri "/star", :request-method :patch})
+    (star-testing :put [:star] {}
+                  {:uri "/star", :request-method :put})
+    (star-testing :destroy [:star] {}
+                  {:uri "/star", :request-method :delete})))
+
+(deftest resource-wihout-segment
+  (let [star-controller {:show    (fn [req] req)
+                         :new     (fn [req] req)
+                         :create  (fn [req] req)
+                         :edit    (fn [req] req)
+                         :update  (fn [req] req)
+                         :put     (fn [req] req)
+                         :destroy (fn [req] req)}
+        star (r/resource :star star-controller
+                         :segment false)
+        star-testing (partial route-testing star)]
+    (star-testing :new [:star] {}
+                  {:uri "/new", :request-method :get})
+    (star-testing :create [:star] {}
+                  {:uri "", :request-method :post})
+    (star-testing :show [:star] {}
+                  {:uri "", :request-method :get})
+    (star-testing :edit [:star] {}
+                  {:uri "/edit", :request-method :get})
+    (star-testing :update [:star] {}
+                  {:uri "", :request-method :patch})
+    (star-testing :put [:star] {}
+                  {:uri "", :request-method :put})
+    (star-testing :destroy [:star] {}
+                  {:uri "", :request-method :delete})))
+
+;; ~~~~~~~~~~ Nested ~~~~~~~~~~
+
+(deftest resources-with-nested
+  (let [comments-controller {:show (fn [req] req)}
+        comments (r/resources :comments :comment comments-controller)
+
+        pages-controller {}
+        pages (r/resources :pages :page pages-controller
+                           :nested [comments])
+        pages-testing (partial route-testing pages)]
+    (pages-testing :show [:page :comment] {:page-id "some-page-id"
+                                           :comment-id "some-comment-id"}
+                   {:uri "/pages/some-page-id/comments/some-comment-id"
+                    :request-method :get})))
+
+(deftest resource-with-nested
+  (let [comments-controller {:show (fn [req] req)}
+        comments (r/resources :comments :comment comments-controller)
+
+        star-controller {}
+        star (r/resource :star star-controller
+                         :nested [comments])
+        star-testing (partial route-testing star)]
+    (star-testing :show [:star :comment] {:comment-id "some-comment-id"}
+                  {:uri "/star/comments/some-comment-id"
+                   :request-method :get})))
+
+;; ~~~~~~~~~~ Scopes ~~~~~~~~~~
+
+(deftest section
+ (let [pages-controller {:index (fn [req] req)}
+       pages (r/resources :pages :page pages-controller)
+       admin (r/section :admin
+                        pages)
+       admin-testing (partial route-testing admin)]
+   (admin-testing :index [:admin :pages] {}
+                  {:uri "/admin/pages", :request-method :get})))
