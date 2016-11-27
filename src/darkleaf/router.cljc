@@ -212,8 +212,10 @@
 
 ;; ~~~~~~~~~~ Helpers ~~~~~~~~~~
 
-(def ^:private empty-segments clojure.lang.PersistentQueue/EMPTY)
-(def ^:private empty-scope    clojure.lang.PersistentQueue/EMPTY)
+(def ^:private empty-segments #?(:clj clojure.lang.PersistentQueue/EMPTY
+                                 :cljs cljs.core/PersistentQueue.EMPTY))
+(def ^:private empty-scope    #?(:clj clojure.lang.PersistentQueue/EMPTY
+                                 :cljs cljs.core/PersistentQueue.EMPTY))
 
 (defn- uri->segments [uri]
   (into empty-segments
