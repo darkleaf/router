@@ -1,4 +1,4 @@
-(defproject darkleaf/router "0.1.0-SNAPSHOT"
+(defproject darkleaf/router "0.2.0-alpha"
   :description "Bidirectional Ring router. REST oriented."
   :url "https://github.com/darkleaf/router"
   :license {:name "Eclipse Public License"
