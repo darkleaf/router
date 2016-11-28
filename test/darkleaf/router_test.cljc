@@ -137,7 +137,7 @@
 
         pages-controller {}
         pages (r/resources :pages :page pages-controller
-                           :nested [comments])
+                           comments)
         pages-testing (partial route-testing pages)]
     (pages-testing :show [:page :comment] {:page-id "some-page-id"
                                            :comment-id "some-comment-id"}
@@ -150,7 +150,7 @@
 
         star-controller {}
         star (r/resource :star star-controller
-                         :nested [comments])
+                         comments)
         star-testing (partial route-testing star)]
     (star-testing :show [:star :comment] {:comment-id "some-comment-id"}
                   {:uri "/star/comments/some-comment-id"
@@ -166,3 +166,73 @@
        admin-testing (partial route-testing admin)]
    (admin-testing :index [:admin :pages] {}
                   {:uri "/admin/pages", :request-method :get})))
+
+;; ~~~~~~~~~~ Middlewares ~~~~~~~~~~
+
+(deftest resources-with-middleware
+  (let [comments-controller {:middleware (fn [handler]
+                                           (fn [req]
+                                             (-> req
+                                                 (assoc :test-key :overriden)
+                                                 (handler))))
+                             :show (fn [req] req)
+                             :index (fn [req] req)}
+        comments (r/resources :comments :comment comments-controller)
+
+        pages-controller {:middleware (fn [handler]
+                                        (fn [req]
+                                          (-> req
+                                              (assoc :test-key :original)
+                                              (handler))))
+                          :index (fn [req] req)
+                          :show (fn [req] req)}
+        pages (r/resources :pages :page pages-controller
+                           comments)
+        handler (r/make-handler pages)]
+    (testing "head resources"
+      (let [req {:uri "/pages", :request-method :get}
+            resp (handler req)]
+        (is (not (contains? resp :test-key))))
+      (let [req {:uri "/pages/1", :request-method :get}
+            resp (handler req)]
+        (is (= :original (:test-key resp)))))
+    (testing "nested"
+      (let [req {:uri "/pages/1/comments", :request-method :get}
+            resp (handler req)]
+        (is (= :original (:test-key resp))))
+      (let [req {:uri "/pages/1/comments/1", :request-method :get}
+            resp (handler req)]
+        (is (= :overriden (:test-key resp)))))))
+
+(deftest section-with-midleware
+  (let [pages-controller {:index (fn [req] req)}
+        pages (r/resources :pages :page pages-controller)
+        middleware (fn [handler]
+                     (fn [req]
+                       (-> req
+                           (assoc :test-key true)
+                           (handler))))
+        routes (r/section :admin
+                          :middleware middleware
+                          pages)
+        handler (r/make-handler routes)]
+    (testing :index
+      (let [req {:uri "/admin/pages", :request-method :get}
+            resp (handler req)]
+        (is (contains? resp :test-key))))))
+
+(deftest wrapper
+  (let [pages-controller {:index (fn [req] req)}
+        pages (r/resources :pages :page pages-controller)
+        middleware (fn [handler]
+                     (fn [req]
+                       (-> req
+                           (assoc :test-key true)
+                           (handler))))
+        routes (r/wrapper middleware
+                          pages)
+        handler (r/make-handler routes)]
+    (testing :index
+      (let [req {:uri "/pages", :request-method :get}
+            resp (handler req)]
+        (is (contains? resp :test-key))))))
