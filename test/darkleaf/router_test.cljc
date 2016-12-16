@@ -156,6 +156,25 @@
                   {:uri "/star/comments/some-comment-id"
                    :request-method :get})))
 
+;; ~~~~~~~~~~ Composite ~~~~~~~~~~
+
+(deftest composite
+  (let [posts-controller {:show (fn [req] req)}
+        posts (r/resources :posts :post posts-controller)
+
+        news-controller {:show (fn [req] req)}
+        news (r/resources :news :news news-controller)
+
+        routes (r/composite posts news)
+
+        routes-testing (partial route-testing routes)]
+    (routes-testing :show [:post] {:post-id "some-post-id"}
+                    {:uri "/posts/some-post-id"
+                     :request-method :get})
+    (routes-testing :show [:news] {:news-id "some-news-id"}
+                    {:uri "/news/some-news-id"
+                     :request-method :get})))
+
 ;; ~~~~~~~~~~ Scopes ~~~~~~~~~~
 
 (deftest section

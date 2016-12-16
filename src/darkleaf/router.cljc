@@ -41,7 +41,7 @@
   (fill [_ req]
     (some-fill req children)))
 
-(defn- composite [& children]
+(defn composite [& children]
   (Composite. children))
 
 (defn- add-middleware [req middleware]
