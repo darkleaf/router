@@ -3,6 +3,9 @@
 [![Build Status](https://travis-ci.org/darkleaf/router.svg?branch=master)](https://travis-ci.org/darkleaf/router)
 [![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
+**OUTDATED README** Alpha version. See tests please.
+
+
 Bidirectional Ring router. REST oriented. It uses the core.match internally.
 
 Routing description is data structure that builds by functions.

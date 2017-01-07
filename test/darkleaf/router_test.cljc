@@ -255,3 +255,19 @@
       (let [req {:uri "/pages", :request-method :get}
             resp (handler req)]
         (is (contains? resp :test-key))))))
+
+;; ~~~~~~~~~~ Utils ~~~~~~~~~~
+
+(deftest internal-request-for
+  (let [pages-controller {:index (fn [req] req)
+                          :show (fn [req] true)}
+        pages (r/resources :pages :page pages-controller)
+        handler (r/make-handler pages)
+        main-req {:uri "/pages", :request-method :get}
+        main-resp (handler main-req)
+        request-for (::r/request-for main-resp)]
+    (testing "presence"
+      (is (contains? main-resp ::r/request-for)))
+    (testing "correctness"
+      (let [req (request-for :show [:page] {:page-id 1})]
+        (is (= (:uri req) "/pages/1"))))))

@@ -286,15 +286,6 @@
        (map #(str "/" %))
        (join)))
 
-(defn make-handler [item]
-  (fn [req]
-    (as-> req r
-      (assoc r ::scope empty-scope)
-      (assoc r ::params {})
-      (assoc r ::segments (uri->segments (:uri r)))
-      (assoc r ::middlewares empty-middlewares)
-      (handle item r))))
-
 (defn make-request-for [item]
   (fn [action scope params]
     (let [scope (into empty-scope scope)]
@@ -302,3 +293,14 @@
           (fill item r)
           (assoc r :uri (segments->uri (::segments r)))
           (dissoc r ::action ::scope ::params ::segments)))))
+
+(defn make-handler [item]
+  (let [request-for (make-request-for item)]
+    (fn [req]
+      (as-> req r
+        (assoc r ::request-for request-for)
+        (assoc r ::scope empty-scope)
+        (assoc r ::params {})
+        (assoc r ::segments (uri->segments (:uri r)))
+        (assoc r ::middlewares empty-middlewares)
+        (handle item r)))))
