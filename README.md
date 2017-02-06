@@ -3,45 +3,77 @@
 [![Build Status](https://travis-ci.org/darkleaf/router.svg?branch=master)](https://travis-ci.org/darkleaf/router)
 [![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
-**OUTDATED README** Alpha version. See tests please.
-
-
-Bidirectional Ring router. REST oriented. It uses the core.match internally.
+Bidirectional RESTfull Ring router.
 
 Routing description is data structure that builds by functions.
-`handler` and `request-for` are functions builing by macros.
 
-## Project status
+Эта библиотека рассчитана на новые проекты.
+Навязывает структурирование роутинга только с помощью ресурсов.
+Ресурсом может быть страница, сессия, завершение проекта.
 
-Ready for hobby projects.
-May be API will be corrected but not fundamentally.
-I plan to gather feedback to make adjustments and make release.
+Имеется возможность расширить dsl используя протоколы.
 
-## Basic usage
 
-```clojure
-(ns hello-world.core
-  (:require [darkleaf.router :refer :all]))
+## Controllers
 
-;; routes must store into a var for macro magick
-(def routes
-  (build-routes
-   (action :about (fn [req] some-ring-response))
-   (section :products
-    (action :get :mug (fn [req] some-ring-response)))))
+Контроллер представляет собой map, где ключ - это название экшена, а значение - обработчик запроса.
 
-(def handler (build-handler routes))
-(def request-for (build-request-for routes))
-
-(handler {:uri "/about", :request-method :get}) ;; call about action
-(request-for :contacts []) ;; returns {:uri "/about", :request-method :get}
-
-(handler {:uri "/products/mug", :request-method :get}) ;; call mug action in product's scope
-(request-for :mug [:products]) ;; returns {:uri "/products/mug", :request-method :get}
+``` clojure
+(def pages-controller
+  {:index   (fn [req] "index resp")
+   :show    (fn [req] "show resp")
+   :new     (fn [req] "new resp")
+   :create  (fn [req] "create resp")
+   :edit    (fn [req] "edit resp")
+   :update  (fn [req] "update resp")
+   :put     (fn [req] "put resp")
+   :destroy (fn [req] "destroy resp")})
 ```
 
-This library also contains some useful functions including `root`, `wildcard`, `not-found`, `guard`, `resource`, `resources`.
-Please see [tests](test/darkleaf/router_test.clj) for more examples.
+## Resources
+
+Ресусы соззаются функцией `resources`:
+
+``` clojure
+(resources :pages :page pages-controller)
+```
+
+
+Эта функция принимает следующие праметры:
+названия ресурса в множественном и единственном числах,
+контроллер, и опциональные параметры, которые рассмотрем ниже.
+
+Зная action name, scope и params можно получить http...
+
+| Action name | Scope | Params | Http method | Url |
+| --- | --- | --- | --- | --- |
+| index   | [:pages] | {}           | Get    | /pages        |
+| show    | [:page]  | {:page-id 1} | Get    | /pages/1      |
+| new     | [:page]  | {}           | Get    | /pages/new    |
+| create  | [:page]  | {}           | Post   | /pages        |
+| edit    | [:page]  | {:page-id 1} | Get    | /pages/1/edit |
+| update  | [:page]  | {:page-id 1} | Patch  | /pages/1      |
+| put     | [:page]  | {:page-id 1} | Put    | /pages/1      |
+| destroy | [:page]  | {:page-id 1} | Delete | /pages/1      |
+
+
+## Resource
+
+| Action name | Scope | Http method | Url |
+| --- | --- | --- | --- |
+| show    | [:star]  | Get    | /star/:star-id      |
+| new     | [:star]  | Get    | /star/new           |
+| create  | [:star]  | Post   | /star               |
+| edit    | [:star]  | Get    | /star/:star-id/edit |
+| update  | [:star]  | Patch  | /star/:star-id      |
+| put     | [:star]  | Put    | /star/:star-id      |
+| destroy | [:star]  | Delete | /star/:star-id      |
+
+
+
+
+##
+
 
 ## Resourceful routing
 

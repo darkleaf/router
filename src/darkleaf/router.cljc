@@ -1,5 +1,8 @@
 (ns darkleaf.router
-  (:require [clojure.string :refer [split join]]))
+  (:require [clojure.string :refer [split join]]
+
+
+            [clojure.pprint :refer [pprint]]))
 
 ;; ~~~~~~~~~~ Utils ~~~~~~~~~~
 
@@ -59,10 +62,10 @@
             (some-handle children)))
   (fill [_ req]
     (when (= id (peek (::scope req)))
-        (-> req
-            (update ::scope pop)
-            (fill-impl)
-            (some-fill children)))))
+      (-> req
+          (update ::scope pop)
+          (fill-impl)
+          (some-fill children)))))
 
 (defn- scope
   ([id handle-impl fill-impl children]
@@ -144,7 +147,8 @@
 
 ;; ~~~~~~~~~~ Resources ~~~~~~~~~~
 
-(defn- resources-collection-scope [scope-id segment & children]
+(defn- resources-collection-scope [scope-id segment middleware
+                                   & children]
   (let [handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (::segments req)))
@@ -154,7 +158,7 @@
                     (fn [req]
                       (update req ::segments conj segment))
                     identity)]
-    (scope scope-id handle-impl fill-impl children)))
+    (scope scope-id handle-impl fill-impl middleware children)))
 
 (defn- resources-member-scope [plural-name singular-name segment middleware & children]
   (let [id-key (keyword (str (name singular-name) "-id"))
@@ -211,24 +215,31 @@
                            (action :put :put handler))
           destroy-action (when-let [handler (:destroy controller)]
                            (action :destroy :delete handler))
-          middleware (:middleware controller)]
+          middleware (get controller :middleware identity)
+          collection-middleware (get controller :collection-middleware identity)
+          member-middleware (get controller :member-middleware identity)
+          middleware-for-collection (comp middleware collection-middleware)
+          middleware-for-member (comp middleware member-middleware)]
      (composite
       (resources-collection-scope plural-name segment
+                                  middleware-for-collection
                                   index-action)
       (resources-collection-scope singular-name segment
+                                  middleware-for-collection
                                   new-action
                                   create-action)
-      (apply resources-member-scope plural-name singular-name segment middleware
-             (into nested
-                   [show-action
-                    edit-action
+      (apply resources-member-scope plural-name singular-name segment
+             middleware-for-member
+             (into (vec nested)
+                   [edit-action
+                    show-action
                     update-action
                     put-action
                     destroy-action]))))))
 
 ;; ~~~~~~~~~~ Resource ~~~~~~~~~~
 
-(defn- resource-scope [scope-id segment & children]
+(defn- resource-scope [scope-id segment middleware & children]
   (let [handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (::segments req)))
@@ -238,7 +249,7 @@
                     (fn [req]
                       (update req ::segments conj segment))
                     identity)]
-    (scope scope-id handle-impl fill-impl identity children)))
+    (scope scope-id handle-impl fill-impl middleware children)))
 
 (defn resource [& args]
   (let [[singular-name controller
@@ -258,8 +269,9 @@
           put-action     (when-let [handler (:put controller)]
                            (action :put :put handler))
           destroy-action (when-let [handler (:destroy controller)]
-                           (action :destroy :delete handler))]
-      (apply resource-scope singular-name segment
+                           (action :destroy :delete handler))
+          middleware (get controller :middleware)]
+      (apply resource-scope singular-name segment middleware
              new-action
              create-action
              show-action
