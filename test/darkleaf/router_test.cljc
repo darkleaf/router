@@ -314,16 +314,19 @@
             req {:uri "/pages", :request-method :get}]
         (is (= "wrapper // index resp" (handler req)))))))
 
-(deftest internal-request-for
-  (let [pages-controller {:index (fn [req] req)
-                          :show (fn [req] true)}
+(deftest request-keys
+  (let [pages-controller {:index (fn [req] "index resp")
+                          :show (fn [req] req)}
         pages (r/resources :pages :page pages-controller)
         handler (r/make-handler pages)
-        main-req {:uri "/pages", :request-method :get}
-        main-resp (handler main-req)
-        request-for (::r/request-for main-resp)]
-    (testing "presence"
-      (is (contains? main-resp ::r/request-for)))
-    (testing "correctness"
-      (let [req (request-for :show [:page] {:page-id 1})]
-        (is (= (:uri req) "/pages/1"))))))
+        returned-req (handler {:uri "/pages/1", :request-method :get})]
+    (testing ::r/request-for
+      (let [request-for (::r/request-for returned-req)
+            req (request-for :index [:pages] {})]
+        (is (= "/pages" (:uri req)))))
+    (testing ::r/action
+      (is (= :show (::r/action returned-req))))
+    (testing ::r/scope
+      (is (= [:page] (::r/scope returned-req))))
+    (testing ::r/params
+      (is (= {:page-id "1"} (::r/params returned-req))))))
