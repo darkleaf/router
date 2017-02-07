@@ -208,136 +208,111 @@
                   {:uri "/admin/pages", :request-method :get}
                   "index resp")))
 
-(deftest middlewares
-  (testing "resources"
-    (let [middleware (fn [handler name]
-                       (fn [req]
-                         (str name " // " (handler req))))
-          collection-middleware (fn [handler]
-                                  (fn [req]
-                                    (str "collection // " (handler req))))
-          member-middleware (fn [handler]
-                              (fn [req]
-                                (str "member // " (handler req))))
-          pages-controller {:middleware #(middleware % "pages")
-                            :collection-middleware collection-middleware
-                            :member-middleware member-middleware
-                            :index   (fn [req] "index resp")
-                            :show    (fn [req] "show resp")
-                            :new     (fn [req] "new resp")
-                            :create  (fn [req] "create resp")
-                            :edit    (fn [req] "edit resp")
-                            :update  (fn [req] "update resp")
-                            :put     (fn [req] "put resp")
-                            :destroy (fn [req] "destroy resp")}
-          star-controller {:middleware #(middleware % "star")
-                           :show (fn [req] "show star resp")}
-          routes (r/resources :pages :page pages-controller
-                              (r/resource :star star-controller))
-          handler (r/make-handler routes)]
+(deftest middleware
+  (letfn [(make-middleware [name]
+            (fn [handler]
+              (fn [req]
+                (str name " // " (handler req)))))]
+    (testing "resources"
+      (let [pages-controller {:middleware (make-middleware "pages")
+                              :collection-middleware (make-middleware "collection")
+                              :member-middleware (make-middleware "member")
+                              :index   (fn [req] "index resp")
+                              :show    (fn [req] "show resp")
+                              :new     (fn [req] "new resp")
+                              :create  (fn [req] "create resp")
+                              :edit    (fn [req] "edit resp")
+                              :update  (fn [req] "update resp")
+                              :put     (fn [req] "put resp")
+                              :destroy (fn [req] "destroy resp")}
+            star-controller {:middleware (make-middleware "star")
+                             :show (fn [req] "show star resp")}
+            routes (r/resources :pages :page pages-controller
+                                (r/resource :star star-controller))
+            handler (r/make-handler routes)]
 
-      (are [req resp] (= resp (handler req))
-        {:uri "/pages", :request-method :get}
-        "pages // collection // index resp"
+        (are [req resp] (= resp (handler req))
+          {:uri "/pages", :request-method :get}
+          "pages // collection // index resp"
 
-        {:uri "/pages/1", :request-method :get}
-        "pages // member // show resp"
+          {:uri "/pages/1", :request-method :get}
+          "pages // member // show resp"
 
-        {:uri "/pages/new", :request-method :get}
-        "pages // collection // new resp"
+          {:uri "/pages/new", :request-method :get}
+          "pages // collection // new resp"
 
-        {:uri "/pages", :request-method :post}
-        "pages // collection // create resp"
+          {:uri "/pages", :request-method :post}
+          "pages // collection // create resp"
 
-        {:uri "/pages/1/edit", :request-method :get}
-        "pages // member // edit resp"
+          {:uri "/pages/1/edit", :request-method :get}
+          "pages // member // edit resp"
 
-        {:uri "/pages/1", :request-method :patch}
-        "pages // member // update resp"
+          {:uri "/pages/1", :request-method :patch}
+          "pages // member // update resp"
 
-        {:uri "/pages/1", :request-method :put}
-        "pages // member // put resp"
+          {:uri "/pages/1", :request-method :put}
+          "pages // member // put resp"
 
-        {:uri "/pages/1", :request-method :delete}
-        "pages // member // destroy resp"
+          {:uri "/pages/1", :request-method :delete}
+          "pages // member // destroy resp"
 
-        {:uri "/pages/1/star", :request-method :get}
-        "pages // member // star // show star resp")))
-  (testing "resource"
-    (let [middleware (fn [handler name]
-                       (fn [req]
-                         (str name " // " (handler req))))
-          star-controller {:middleware #(middleware % "star")
-                           :show    (fn [req] "show resp")
-                           :new     (fn [req] "new resp")
-                           :create  (fn [req] "create resp")
-                           :edit    (fn [req] "edit resp")
-                           :update  (fn [req] "update resp")
-                           :put     (fn [req] "put resp")
-                           :destroy (fn [req] "destroy resp")}
-          comments-controllers {:middleware #(middleware % "comments")
-                                :index (fn [req] "comments index")}
-          routes (r/resource :star star-controller
-                             (r/resources :comments :comment comments-controllers))
-          handler (r/make-handler routes)]
-      (are [req resp] (= resp (handler req))
-        {:uri "/star", :request-method :get}
-        "star // show resp"
+          {:uri "/pages/1/star", :request-method :get}
+          "pages // member // star // show star resp")))
+    (testing "resource"
+      (let [star-controller {:middleware (make-middleware "star")
+                             :show    (fn [req] "show resp")
+                             :new     (fn [req] "new resp")
+                             :create  (fn [req] "create resp")
+                             :edit    (fn [req] "edit resp")
+                             :update  (fn [req] "update resp")
+                             :put     (fn [req] "put resp")
+                             :destroy (fn [req] "destroy resp")}
+            comments-controllers {:middleware (make-middleware "comments")
+                                  :index (fn [req] "comments index")}
+            routes (r/resource :star star-controller
+                               (r/resources :comments :comment comments-controllers))
+            handler (r/make-handler routes)]
+        (are [req resp] (= resp (handler req))
+          {:uri "/star", :request-method :get}
+          "star // show resp"
 
-        {:uri "/star/new", :request-method :get}
-        "star // new resp"
+          {:uri "/star/new", :request-method :get}
+          "star // new resp"
 
-        {:uri "/star", :request-method :post}
-        "star // create resp"
+          {:uri "/star", :request-method :post}
+          "star // create resp"
 
-        {:uri "/star/edit", :request-method :get}
-        "star // edit resp"
+          {:uri "/star/edit", :request-method :get}
+          "star // edit resp"
 
-        {:uri "/star", :request-method :patch}
-        "star // update resp"
+          {:uri "/star", :request-method :patch}
+          "star // update resp"
 
-        {:uri "/star", :request-method :put}
-        "star // put resp"
+          {:uri "/star", :request-method :put}
+          "star // put resp"
 
-        {:uri "/star", :request-method :delete}
-        "star // destroy resp"
+          {:uri "/star", :request-method :delete}
+          "star // destroy resp"
 
-        {:uri "/star/comments", :request-method :get}
-        "star // comments // comments index"))))
+          {:uri "/star/comments", :request-method :get}
+          "star // comments // comments index")))
 
-#_(deftest section-with-midleware
-    (let [pages-controller {:index (fn [req] req)}
-          pages (r/resources :pages :page pages-controller)
-          middleware (fn [handler]
-                       (fn [req]
-                         (-> req
-                             (assoc :test-key true)
-                             (handler))))
-          routes (r/section :admin
-                            :middleware middleware
-                            pages)
-          handler (r/make-handler routes)]
-      (testing :index
-        (let [req {:uri "/admin/pages", :request-method :get}
-              resp (handler req)]
-          (is (contains? resp :test-key))))))
+    (testing "section"
+      (let [pages-controller {:index (fn [req] "index resp")}
+            routes (r/section :admin
+                              :middleware (make-middleware "admin")
+                              (r/resources :pages :page pages-controller))
+            handler (r/make-handler routes)
+            req {:uri "/admin/pages", :request-method :get}]
+        (is (= "admin // index resp" (handler req)))))
 
-(deftest wrapper
-  (let [pages-controller {:index (fn [req] req)}
-        pages (r/resources :pages :page pages-controller)
-        middleware (fn [handler]
-                     (fn [req]
-                       (-> req
-                           (assoc :test-key true)
-                           (handler))))
-        routes (r/wrapper middleware
-                          pages)
-        handler (r/make-handler routes)]
-    (testing :index
-      (let [req {:uri "/pages", :request-method :get}
-            resp (handler req)]
-        (is (contains? resp :test-key))))))
-
+    (testing "wrapper"
+      (let [pages-controller {:index (fn [req] "index resp")}
+            routes (r/wrapper (make-middleware "wrapper")
+                              (r/resources :pages :page pages-controller))
+            handler (r/make-handler routes)
+            req {:uri "/pages", :request-method :get}]
+        (is (= "wrapper // index resp" (handler req)))))))
 
 (deftest internal-request-for
   (let [pages-controller {:index (fn [req] req)
