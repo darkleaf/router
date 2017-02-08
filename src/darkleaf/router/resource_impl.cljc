@@ -1,7 +1,7 @@
-(ns darkleaf.router.resource
+(ns darkleaf.router.resource-impl
   (:require [darkleaf.router.keys :as k]
-            [darkleaf.router.scope :refer [scope]]
-            [darkleaf.router.action :refer [action]]
+            [darkleaf.router.scope-impl :refer [scope]]
+            [darkleaf.router.action-impl :refer [action]]
             [darkleaf.router.util :as util]))
 
 (defn- resource-scope [scope-id segment middleware & children]

@@ -1,6 +1,6 @@
-(ns darkleaf.router.section
+(ns darkleaf.router.section-impl
   (:require [darkleaf.router.keys :as k]
-            [darkleaf.router.scope :refer [scope]]
+            [darkleaf.router.scope-impl :refer [scope]]
             [darkleaf.router.util :as util]))
 
 (defn section [& args]

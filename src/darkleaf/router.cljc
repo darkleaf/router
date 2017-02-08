@@ -1,15 +1,15 @@
 (ns darkleaf.router
-  (:require [darkleaf.router.composite :as ns-composite]
-            [darkleaf.router.wrapper :as ns-wrapper]
-            [darkleaf.router.section :as ns-section]
-            [darkleaf.router.resource :as ns-resource]
-            [darkleaf.router.resources :as ns-resources]
+  (:require [darkleaf.router.composite-impl :as composite-impl]
+            [darkleaf.router.wrapper-impl :as wrapper-impl]
+            [darkleaf.router.section-impl :as section-impl]
+            [darkleaf.router.resource-impl :as resource-impl]
+            [darkleaf.router.resources-impl :as resources-impl]
             [darkleaf.router.helpers :as helpers]))
 
-(def composite ns-composite/composite)
-(def wrapper ns-wrapper/wrapper)
-(def section ns-section/section)
-(def resource ns-resource/resource)
-(def resources ns-resources/resources)
+(def composite composite-impl/composite)
+(def wrapper wrapper-impl/wrapper)
+(def section section-impl/section)
+(def resource resource-impl/resource)
+(def resources resources-impl/resources)
 (def make-request-for helpers/make-request-for)
 (def make-handler helpers/make-handler)

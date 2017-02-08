@@ -1,4 +1,4 @@
-(ns darkleaf.router.composite
+(ns darkleaf.router.composite-impl
   (:require [darkleaf.router.protocols :as p]))
 
 (defrecord Composite [children]

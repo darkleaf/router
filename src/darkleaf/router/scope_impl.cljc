@@ -1,4 +1,4 @@
-(ns darkleaf.router.scope
+(ns darkleaf.router.scope-impl
   (:require [darkleaf.router.keys :as k]
             [darkleaf.router.protocols :as p]))
 
