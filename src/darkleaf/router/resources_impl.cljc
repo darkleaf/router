@@ -18,7 +18,7 @@
                     identity)]
     (scope scope-id handle-impl fill-impl middleware children)))
 
-(defn- resources-member-scope [plural-name singular-name segment middleware & children]
+(defn- resources-member-scope [singular-name segment middleware & children]
   (let [id-key (keyword (str (name singular-name) "-id"))
         handle-impl (if segment
                       (fn [req]
@@ -86,7 +86,7 @@
                                    middleware-for-collection
                                    new-action
                                    create-action)
-       (apply resources-member-scope plural-name singular-name segment
+       (apply resources-member-scope singular-name segment
               middleware-for-member
               (into nested
                     [edit-action
