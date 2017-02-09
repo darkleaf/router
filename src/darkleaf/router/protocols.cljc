@@ -1,5 +1,5 @@
 (ns darkleaf.router.protocols
-  (:require [darkleaf.router.keys :as k]))
+  (:require [darkleaf.router.keywords :as k]))
 
 (defprotocol Item
   (handle [this req])

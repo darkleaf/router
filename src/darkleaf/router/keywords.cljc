@@ -1,4 +1,4 @@
-(ns darkleaf.router.keys)
+(ns darkleaf.router.keywords)
 
 (def request-for :darkleaf.router/request-for)
 (def scope :darkleaf.router/scope)

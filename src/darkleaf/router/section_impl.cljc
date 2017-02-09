@@ -1,5 +1,5 @@
 (ns darkleaf.router.section-impl
-  (:require [darkleaf.router.keys :as k]
+  (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.scope-impl :refer [scope]]
             [darkleaf.router.util :as util]))
 

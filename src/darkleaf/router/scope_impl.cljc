@@ -1,5 +1,5 @@
 (ns darkleaf.router.scope-impl
-  (:require [darkleaf.router.keys :as k]
+  (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.protocols :as p]))
 
 (defrecord Scope [id handle-impl fill-impl middleware children]

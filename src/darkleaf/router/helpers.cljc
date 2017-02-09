@@ -1,6 +1,6 @@
 (ns darkleaf.router.helpers
   (:require [clojure.string :refer [split join]]
-            [darkleaf.router.keys :as k]
+            [darkleaf.router.keywords :as k]
             [darkleaf.router.protocols :as protocols]))
 
 (def ^:private empty-segments #?(:clj clojure.lang.PersistentQueue/EMPTY

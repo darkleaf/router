@@ -1,5 +1,5 @@
 (ns darkleaf.router.action-impl
-  (:require [darkleaf.router.keys :as k]
+  (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.protocols :as p]))
 
 (defn- handle-with-middlewares [req handler]
