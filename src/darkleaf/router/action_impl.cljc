@@ -21,7 +21,8 @@
             (assoc k/action id)
             (handle-with-middlewares handler)))
   (fill [_ req]
-    (when (= id (k/action req))
+    (when (and (= id (k/action req))
+               (empty? (k/scope req)))
       (-> req
           (fill-impl)))))
 

@@ -3,10 +3,12 @@
             [darkleaf.router.scope-impl :refer [scope]]
             [darkleaf.router.action-impl :refer [action]]
             [darkleaf.router.composite-impl :refer [composite]]
+            [darkleaf.router.nil-item-impl :refer [nil-item]]
             [darkleaf.router.util :as util]))
 
 (defn- resources-collection-scope [scope-id segment middleware & children]
-  (let [handle-impl (if segment
+  (let [children (remove nil? children)
+        handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (k/segments req)))
                           (update req k/segments pop)))
@@ -15,10 +17,13 @@
                     (fn [req]
                       (update req k/segments conj segment))
                     identity)]
-    (scope scope-id handle-impl fill-impl middleware children)))
+    (if (seq children)
+      (scope scope-id handle-impl fill-impl middleware children)
+      (nil-item))))
 
 (defn- resources-member-scope [singular-name segment middleware & children]
-  (let [id-key (keyword (str (name singular-name) "-id"))
+  (let [children (remove nil? children)
+        id-key (keyword (str (name singular-name) "-id"))
         handle-impl (if segment
                       (fn [req]
                         (let [segments (k/segments req)
@@ -48,7 +53,9 @@
                     (fn [req]
                       (let [id (get-in req [k/params id-key])]
                         (update req k/segments conj id))))]
-    (scope singular-name handle-impl fill-impl middleware children)))
+    (if (seq children)
+     (scope singular-name handle-impl fill-impl middleware children)
+     (nil-item))))
 
 (defn resources [& args]
   (let [[plural-name singular-name controller
@@ -92,10 +99,4 @@
                      show-action
                      update-action
                      destroy-action
-                     put-action])
-              #_(into (vec nested)
-                      [edit-action
-                       show-action
-                       update-action
-                       put-action
-                       destroy-action]))))))
+                     put-action]))))))

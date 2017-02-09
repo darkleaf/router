@@ -21,5 +21,4 @@
   ([id handle-impl fill-impl children]
    (scope id handle-impl fill-impl identity children))
   ([id handle-impl fill-impl middleware children]
-   (let [children (remove nil? children)]
-     (Scope. id handle-impl fill-impl middleware children))))
+   (Scope. id handle-impl fill-impl middleware children)))

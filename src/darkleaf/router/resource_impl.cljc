@@ -2,10 +2,12 @@
   (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.scope-impl :refer [scope]]
             [darkleaf.router.action-impl :refer [action]]
+            [darkleaf.router.nil-item-impl :refer [nil-item]]
             [darkleaf.router.util :as util]))
 
 (defn- resource-scope [scope-id segment middleware & children]
-  (let [handle-impl (if segment
+  (let [children (remove nil? children)
+        handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (k/segments req)))
                           (update req k/segments pop)))
@@ -14,7 +16,9 @@
                     (fn [req]
                       (update req k/segments conj segment))
                     identity)]
-    (scope scope-id handle-impl fill-impl middleware children)))
+    (if (seq children)
+      (scope scope-id handle-impl fill-impl middleware children)
+      (nil-item))))
 
 (defn resource [& args]
   (let [[singular-name controller

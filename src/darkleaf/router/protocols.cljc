@@ -9,8 +9,4 @@
   (some #(handle % req) xs))
 
 (defn some-fill [req xs]
-  (some (fn [item]
-          (let [req (fill item req)]
-            (when (empty? (k/scope req))
-               req)))
-        xs))
+  (some #(fill % req) xs))
