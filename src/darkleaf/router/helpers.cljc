@@ -1,7 +1,7 @@
 (ns darkleaf.router.helpers
   (:require [clojure.string :refer [split join]]
             [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as protocols]))
+            [darkleaf.router.protocols :as p]))
 
 (def ^:private empty-segments #?(:clj clojure.lang.PersistentQueue/EMPTY
                                  :cljs cljs.core/PersistentQueue.EMPTY))
@@ -25,7 +25,7 @@
              k/scope scope
              k/params params
              k/segments empty-segments} r
-        (protocols/fill item r)
+        (p/fill item r)
         (assoc r :uri (segments->uri (k/segments r)))
         (dissoc r k/action k/scope k/params k/segments)))))
 
@@ -38,4 +38,4 @@
         (assoc r k/params {})
         (assoc r k/segments (uri->segments (:uri r)))
         (assoc r k/middlewares empty-middlewares)
-        (protocols/handle item r)))))
+        (p/handle item r)))))
