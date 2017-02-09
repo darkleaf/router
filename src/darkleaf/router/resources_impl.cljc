@@ -5,8 +5,7 @@
             [darkleaf.router.composite-impl :refer [composite]]
             [darkleaf.router.util :as util]))
 
-(defn- resources-collection-scope [scope-id segment middleware
-                                   & children]
+(defn- resources-collection-scope [scope-id segment middleware & children]
   (let [handle-impl (if segment
                       (fn [req]
                         (when (= segment (peek (k/segments req)))
