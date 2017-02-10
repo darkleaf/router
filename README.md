@@ -12,20 +12,32 @@ Routing can be described in cljc files for code sharing.
 
 Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
-Библиотека наваязывает определенный подход к проектированию роутинга.
+Библиотека подразумевает определенный подход к проектированию роутинга.
 
-Например, есть ресурс Проект и его можно завершить.
+Например, есть ресурс Проект и его требуется завершать.
 Можно предположить, что проект должнен иметь экшен "завершить".
-После этого понадобится форма для указания данных для завершения проекта.
+Спустя время, поступает новое требование: должна быть форма для указания данных при завершении проекта.
 В этом случае придется добавлять экшен "показать форму завершения проекта".
-При таком подходе контроллер быстро разрастается и успложняется, фактически начинает контроллировать несколько ресурсов.
+При таком подходе контроллер быстро разрастается и усложняется, фактически начинает контроллировать несколько ресурсов.
 
 В этой библиотеке нельзя добавлять дополнительные экшены к контроллеру,
-вместо этого предлагается использовать волженные ресурсы.
+вместо этого предлагается использовать вложенные ресурсы.
 
-В данном примере это это можно реализовать только единственным способом:
+В данном примере это можно реализовать только единственным способом:
 ресурс Проект содержит вложенный ресурс Завершение,
 для завершения проекта вызывается экшен create ресурса Завершение.
+
+``` clojure
+(def projects-controller
+  {:index (fn [req] "projects list")
+   :show (fn [req] "project page"})
+(def project-completion-controller
+  {:new (fn [req] "completion form")
+   :create (fn [req] "successfully created")})
+
+(r/resources :projects :project projects-controller
+             (r/resource :completition project-completion-controller)
+```
 
 ## Resources
 
@@ -43,9 +55,9 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 ``` clojure
 ;; all keys are optional
 (def pages-controller
-  {:middleware            (fn [h] (fn [req] (h req)))
+  {:middleware            (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
    :collection-middleware (fn [h] (fn [req] (h req)))
-   :member-middleware     (fn [h] (fn [req] (h req)))
+   :member-middleware     (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
    :index   (fn [req] "index resp")
    :show    (fn [req] "show resp")
    :new     (fn [req] "new resp")
@@ -91,7 +103,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 ``` clojure
 ;; all keys are optional
 (def star-controller
-  {:middleware (fn [h] (fn [req] (h req)))
+  {:middleware (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
    :show    (fn [req] "show resp")
    :new     (fn [req] "new resp")
    :create  (fn [req] "create resp")
