@@ -12,6 +12,8 @@ Routing can be described in cljc files for code sharing.
 
 Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
+## Concept
+
 Библиотека подразумевает определенный подход к проектированию роутинга.
 
 Например, есть ресурс Проект и его требуется завершать.
@@ -178,7 +180,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
 ```
 
-Router adds keys for request map:
+Handler adds keys for request map:
 * :darkleaf.router/action
 * :darkleaf.router/scope
 * :darkleaf.router/params
