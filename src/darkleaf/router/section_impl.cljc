@@ -5,12 +5,12 @@
 
 (defn section [& args]
   (let [[id
-         {:keys [middleware]
-          :or {middleware identity}}
+         {:keys [middleware segment]
+          :or {middleware identity
+               segment (name id)}}
          children]
         (util/parse-args 1 args)]
-    (let [segment (name id)
-          handle-impl (fn [req]
+    (let [handle-impl (fn [req]
                         (when (= segment (peek (k/segments req)))
                           (update req k/segments pop)))
           fill-impl (fn [req]

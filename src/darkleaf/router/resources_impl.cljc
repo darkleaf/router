@@ -48,10 +48,10 @@
                                 (assoc-in [k/params id-key] given-id))))))
         fill-impl (if segment
                     (fn [req]
-                      (let [id (get-in req [k/params id-key])]
+                      (when-let [id (get-in req [k/params id-key])]
                         (update req k/segments conj segment id)))
                     (fn [req]
-                      (let [id (get-in req [k/params id-key])]
+                      (when-let [id (get-in req [k/params id-key])]
                         (update req k/segments conj id))))]
     (if (seq children)
      (scope singular-name handle-impl fill-impl middleware children)

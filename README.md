@@ -3,24 +3,50 @@
 [![Build Status](https://travis-ci.org/darkleaf/router.svg?branch=master)](https://travis-ci.org/darkleaf/router)
 [![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
-Bidirectional RESTfull Ring router.
-
+Bidirectional RESTfull Ring router for clojure and clojurescript.
 Routing description is data structure that builds by functions.
+No macros, no foreign libs.
+Routing can be described in cljc files for code sharing.
 
-Эта библиотека рассчитана на новые проекты.
-Навязывает структурирование роутинга только с помощью ресурсов.
-Ресурсом может быть страница, сессия, завершение проекта.
+## Usage
 
-Имеется возможность расширить dsl используя протоколы.
+Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
+Библиотека наваязывает определенный подход к проектированию роутинга.
 
-## Controllers
+Например, есть ресурс Проект и его можно завершить.
+Можно предположить, что проект должнен иметь экшен "завершить".
+После этого понадобится форма для указания данных для завершения проекта.
+В этом случае придется добавлять экшен "показать форму завершения проекта".
+При таком подходе контроллер быстро разрастается и успложняется, фактически начинает контроллировать несколько ресурсов.
 
-Контроллер представляет собой map, где ключ - это название экшена, а значение - обработчик запроса.
+В этой библиотеке нельзя добавлять дополнительные экшены к контроллеру,
+вместо этого предлагается использовать волженные ресурсы.
+
+В данном примере это это можно реализовать только единственным способом:
+ресурс Проект содержит вложенный ресурс Завершение,
+для завершения проекта вызывается экшен create ресурса Завершение.
+
+## Resources
+
+| Action name | Scope | Params | Http method | Url | Type | Used for |
+| --- | --- | --- | --- | --- | --- | --- |
+| index   | [:pages] | {}           | Get    | /pages        | collection | display a list of pages  |
+| show    | [:page]  | {:page-id 1} | Get    | /pages/1      | member     | display a specific page |
+| new     | [:page]  | {}           | Get    | /pages/new    | collection | display a form for creating new page |
+| create  | [:page]  | {}           | Post   | /pages        | collection | create a new page |
+| edit    | [:page]  | {:page-id 1} | Get    | /pages/1/edit | member     | display a form for updating page |
+| update  | [:page]  | {:page-id 1} | Patch  | /pages/1      | member     | update a specific page |
+| put     | [:page]  | {:page-id 1} | Put    | /pages/1      | member     | upsert a specific page, may be combined with edit action |
+| destroy | [:page]  | {:page-id 1} | Delete | /pages/1      | member     | delete a specific page |
 
 ``` clojure
+;; all keys are optional
 (def pages-controller
-  {:index   (fn [req] "index resp")
+  {:middleware            (fn [h] (fn [req] (h req)))
+   :collection-middleware (fn [h] (fn [req] (h req)))
+   :member-middleware     (fn [h] (fn [req] (h req)))
+   :index   (fn [req] "index resp")
    :show    (fn [req] "show resp")
    :new     (fn [req] "new resp")
    :create  (fn [req] "create resp")
@@ -30,90 +56,121 @@ Routing description is data structure that builds by functions.
    :destroy (fn [req] "destroy resp")})
 ```
 
-## Resources
-
-Ресусы соззаются функцией `resources`:
-
 ``` clojure
-(resources :pages :page pages-controller)
+;; :index [:pages] {} -> /pages
+;; :show [:page] {:page-id 1} -> /pages/1
+(r/resources :pages :page pages-controller)
+
+;; :index [:people] {} -> /menschen
+;; :show [:person] {:person-id 1} -> /menschen/1
+(r/resources :people :person people-controller
+             :segment "menschen")
+
+;; :index [:people] {} -> /
+;; :show [:person] {:person-id 1} -> /1
+(r/resources :people :person people-controller
+             :segment false)
+
+;; :put [:page :star] {:page-id 1} -> PUT /pages/1/star
+(r/resources :pages :page pages-controller
+             (r/resource :star star-controller)
 ```
-
-
-Эта функция принимает следующие праметры:
-названия ресурса в множественном и единственном числах,
-контроллер, и опциональные параметры, которые рассмотрем ниже.
-
-Зная action name, scope и params можно получить http...
-
-| Action name | Scope | Params | Http method | Url |
-| --- | --- | --- | --- | --- |
-| index   | [:pages] | {}           | Get    | /pages        |
-| show    | [:page]  | {:page-id 1} | Get    | /pages/1      |
-| new     | [:page]  | {}           | Get    | /pages/new    |
-| create  | [:page]  | {}           | Post   | /pages        |
-| edit    | [:page]  | {:page-id 1} | Get    | /pages/1/edit |
-| update  | [:page]  | {:page-id 1} | Patch  | /pages/1      |
-| put     | [:page]  | {:page-id 1} | Put    | /pages/1      |
-| destroy | [:page]  | {:page-id 1} | Delete | /pages/1      |
-
 
 ## Resource
 
-| Action name | Scope | Http method | Url |
-| --- | --- | --- | --- |
-| show    | [:star]  | Get    | /star/:star-id      |
-| new     | [:star]  | Get    | /star/new           |
-| create  | [:star]  | Post   | /star               |
-| edit    | [:star]  | Get    | /star/:star-id/edit |
-| update  | [:star]  | Patch  | /star/:star-id      |
-| put     | [:star]  | Put    | /star/:star-id      |
-| destroy | [:star]  | Delete | /star/:star-id      |
+| Action name | Scope | Params | Http method | Url | Used for
+| --- | --- | --- | --- | --- | --- |
+| show    | [:star] | {} | Get    | /star/:star-id      | display a specific star |
+| new     | [:star] | {} | Get    | /star/new           | display a form for creating new star |
+| create  | [:star] | {} | Post   | /star               | create a new star |
+| edit    | [:star] | {} | Get    | /star/:star-id/edit | display a form for updating star |
+| update  | [:star] | {} | Patch  | /star/:star-id      | update a specific star |
+| put     | [:star] | {} | Put    | /star/:star-id      | upsert a specific star, may be combined with edit action |
+| destroy | [:star] | {} | Delete | /star/:star-id      | delete a specific star |
 
-
-
-
-##
-
-
-## Resourceful routing
-
-```clojure
-(def pages-controller
-  {:middleware (fn [handler] (fn [req] req))
-   :member-middleware some-middleware
-   :index (fn [req] some-ring-response)
-   :show (fn [req] some-ring-response)})
-
-(def routes
-  (build-routes
-   (resources :pages 'page-id pages-controller)))
-
-(def handler (build-handler routes))
-(def request-for (build-request-for routes))
-
-(handler {:uri "/pages", :request-method :get}) ;; call index action from pages-controller
-(request-for :index [:pages]) ;; returns {:uri "/pages", :request-method :get}
-
-(handler {:uri "/pages/1", :request-method :get}) ;; call show action from pages-controller
-(request-for :show [:pages] {:page-id "1"}) ;; returns {:uri "/pages/1", :request-method :get}
+``` clojure
+;; all keys are optional
+(def star-controller
+  {:middleware (fn [h] (fn [req] (h req)))
+   :show    (fn [req] "show resp")
+   :new     (fn [req] "new resp")
+   :create  (fn [req] "create resp")
+   :edit    (fn [req] "edit resp")
+   :update  (fn [req] "update resp")
+   :put     (fn [req] "put resp")
+   :destroy (fn [req] "destroy resp")})
 ```
 
-Router adds two keys for request map: `:matched-route` and `route-params`.
-For show action `route-params` are `{:page-id "1"}`.
+``` clojure
+;; :show [:star] {} -> /star
+(r/resource :star star-controller)
 
-You can also use nested resource(s). You can see examples in [tests](test/darkleaf/router_test.clj).
+;; :show [:star] {} -> /estrella
+(r/resource :star star-controller
+            :segment "estrella")
 
-Controller for resources function can contain certain keys:
-* `:middleware` - middleware that wrap all controller actions including nested routes handlers.
-* `:member-middleware` - wrap only member actions and member nested routes
-* collection actions: `:index`, `:new`, `:create`
-* member actions: `:show`, `:edit`, `:update`, `:destroy`
+;; :show [:star] {} -> /
+(r/resource :star star-controller
+            :segment false)
 
-## Low level
+;; :index [:star :comments] {} -> /star/comments
+(r/resource :star star-controller
+            (r/resources :comments :comment comments-controller)
+```
 
-If you support legacy routing or need some functions for building custom routing
-you can build own fucntions using `darkleaf.router.low-lewel` namespace.
-See examples in `darkleaf.router` [namespace](src/darkleaf/router/low_level.clj) and [tests](test/darkleaf/router/low_level_test.clj).
+## Composite
+
+Объединяет несколько роутов в один.
+
+``` clojure
+(def posts-controller {:show (fn [req] "show post resp")})
+(def news-controller {:show (fn [req] "show news resp")})
+(def routes
+  (r/composite
+   (r/resources :posts :post posts-controller)
+   (r/resources :news :news news-controller)))
+```
+
+## Section
+
+``` clojure
+;; :index [:admin :pages] {} -> /admin/pages
+(r/section :admin
+           (r/resources :pages :page pages-controller))
+
+;; :index [:admin :pages] {} -> /private/pages
+(r/section :admin, :segment "private"
+           (r/resources :pages :page pages-controller))
+
+(r/section :admin, :middleware (fn [h] (fn [req] (h req)))
+           (r/resources :pages :page pages-controller))
+```
+
+## Wrapper
+
+``` clojure
+(r/wrapper (fn [h] (fn [req] (h req)))
+           (r/resources :pages :page pages-controller))
+```
+
+## Helpers
+
+``` clojure
+(def controller {:index (fn [_] "ok")})
+(def pages (resources :pages :page controller))
+
+(def handler (make-handler pages))
+(def request-for (make-request-for pages))
+
+(handler {:uri "/pages", :request-method :get}) ;; call index action from controller
+(request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
+```
+
+Router adds keys for request map:
+* :darkleaf.router/action
+* :darkleaf.router/scope
+* :darkleaf.router/params
+* :darkleaf.router/request-for for preventing circular dependency
 
 ## Questions
 
@@ -121,16 +178,8 @@ You can create github issue with your question.
 
 ## TODO
 
-* refactoring
- * vars & locals naming
- * error messages
- * pre/post specs
-* documentation/wiki
- * best practices
-* helpers ??
- * link-to
-  * query params /pages?filter=active
-* clojure script
+* wildcard, not-found
+* docs, pre, assert
 * clojure.spec
 
 ## License

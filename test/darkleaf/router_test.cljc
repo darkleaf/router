@@ -49,8 +49,43 @@
       (pages-testing :destroy [:page] {:page-id "some-id"}
                      {:uri "/pages/some-id", :request-method :delete}
                      "destroy resp")))
-
-  (testing "without-segment"
+  (testing "specific segment"
+    (let [people-controller {:index   (fn [req] "index resp")
+                             :show    (fn [req] "show resp")
+                             :new     (fn [req] "new resp")
+                             :create  (fn [req] "create resp")
+                             :edit    (fn [req] "edit resp")
+                             :update  (fn [req] "update resp")
+                             :put     (fn [req] "put resp")
+                             :destroy (fn [req] "destroy resp")}
+          people (r/resources :people :person people-controller
+                              :segment "menschen")
+          people-testing (partial route-testing people)]
+      (people-testing :index [:people] {}
+                      {:uri "/menschen", :request-method :get}
+                      "index resp")
+      (people-testing :new [:person] {}
+                      {:uri "/menschen/new", :request-method :get}
+                      "new resp")
+      (people-testing :create [:person] {}
+                      {:uri "/menschen", :request-method :post}
+                      "create resp")
+      (people-testing :show [:person] {:person-id "some-id"}
+                      {:uri "/menschen/some-id", :request-method :get}
+                      "show resp")
+      (people-testing :edit [:person] {:person-id "some-id"}
+                      {:uri "/menschen/some-id/edit", :request-method :get}
+                      "edit resp")
+      (people-testing :update [:person] {:person-id "some-id"}
+                      {:uri "/menschen/some-id", :request-method :patch}
+                      "update resp")
+      (people-testing :put [:person] {:person-id "some-id"}
+                      {:uri "/menschen/some-id", :request-method :put}
+                      "put resp")
+      (people-testing :destroy [:person] {:person-id "some-id"}
+                      {:uri "/menschen/some-id", :request-method :delete}
+                      "destroy resp")))
+  (testing "without segment"
     (let [pages-controller {:index   (fn [req] "index resp")
                             :show    (fn [req] "show resp")
                             :new     (fn [req] "new resp")
@@ -119,8 +154,39 @@
       (star-testing :destroy [:star] {}
                     {:uri "/star", :request-method :delete}
                     "destroy resp")))
-
-  (testing "wihout-segment"
+  (testing "specific segment"
+    (let [star-controller {:show    (fn [req] "show resp")
+                           :new     (fn [req] "new resp")
+                           :create  (fn [req] "create resp")
+                           :edit    (fn [req] "edit resp")
+                           :update  (fn [req] "update resp")
+                           :put     (fn [req] "put resp")
+                           :destroy (fn [req] "destroy resp")}
+          star (r/resource :star star-controller
+                           :segment "estrella")
+          star-testing (partial route-testing star)]
+      (star-testing :new [:star] {}
+                    {:uri "/estrella/new", :request-method :get}
+                    "new resp")
+      (star-testing :create [:star] {}
+                    {:uri "/estrella", :request-method :post}
+                    "create resp")
+      (star-testing :show [:star] {}
+                    {:uri "/estrella", :request-method :get}
+                    "show resp")
+      (star-testing :edit [:star] {}
+                    {:uri "/estrella/edit", :request-method :get}
+                    "edit resp")
+      (star-testing :update [:star] {}
+                    {:uri "/estrella", :request-method :patch}
+                    "update resp")
+      (star-testing :put [:star] {}
+                    {:uri "/estrella", :request-method :put}
+                    "put resp")
+      (star-testing :destroy [:star] {}
+                    {:uri "/estrella", :request-method :delete}
+                    "destroy resp")))
+  (testing "wihout segment"
     (let [star-controller {:show    (fn [req] "show resp")
                            :new     (fn [req] "new resp")
                            :create  (fn [req] "create resp")
@@ -200,13 +266,22 @@
                     "show news resp")))
 
 (deftest section
- (let [pages-controller {:index (fn [req] "index resp")}
-       admin (r/section :admin
-                        (r/resources :pages :page pages-controller))
-       admin-testing (partial route-testing admin)]
-   (admin-testing :index [:admin :pages] {}
-                  {:uri "/admin/pages", :request-method :get}
-                  "index resp")))
+  (testing "ordinal"
+    (let [pages-controller {:index (fn [req] "index resp")}
+          admin (r/section :admin
+                           (r/resources :pages :page pages-controller))
+          admin-testing (partial route-testing admin)]
+      (admin-testing :index [:admin :pages] {}
+                     {:uri "/admin/pages", :request-method :get}
+                     "index resp")))
+  (testing "with segment"
+    (let [pages-controller {:index (fn [req] "index resp")}
+          admin (r/section :admin, :segment "private"
+                           (r/resources :pages :page pages-controller))
+          admin-testing (partial route-testing admin)]
+      (admin-testing :index [:admin :pages] {}
+                     {:uri "/private/pages", :request-method :get}
+                     "index resp"))))
 
 (deftest middleware
   (letfn [(make-middleware [name]
@@ -323,7 +398,7 @@
     (testing ::r/request-for
       (let [request-for (::r/request-for returned-req)
             req (request-for :index [:pages] {})]
-        (is (= "/pages" (:uri req)))))
+        (is (= {:uri "/pages", :request-method :get} req))))
     (testing ::r/action
       (is (= :show (::r/action returned-req))))
     (testing ::r/scope

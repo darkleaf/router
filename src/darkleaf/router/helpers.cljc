@@ -20,14 +20,15 @@
 
 (defn make-request-for [item]
   (fn [action scope params]
-    (let [scope (into empty-scope scope)]
-      (as-> {k/action action
-             k/scope scope
-             k/params params
-             k/segments empty-segments} r
-        (p/fill item r)
-        (assoc r :uri (segments->uri (k/segments r)))
-        (dissoc r k/action k/scope k/params k/segments)))))
+    (let [scope (into empty-scope scope)
+          initial-req {k/action action
+                       k/scope scope
+                       k/params params
+                       k/segments empty-segments}]
+      (when-let [req (p/fill item initial-req)]
+        (as-> req r
+          (assoc r :uri (segments->uri (k/segments r)))
+          (dissoc r k/action k/scope k/params k/segments))))))
 
 (defn make-handler [item]
   (let [request-for (make-request-for item)]
