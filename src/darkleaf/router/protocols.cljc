@@ -2,11 +2,13 @@
   (:require [darkleaf.router.keywords :as k]))
 
 (defprotocol Item
-  (handle [this req])
-  (fill [this req-template]))
+  (process [this req]
+    "return [req handler]")
+  (fill [this req-template]
+    "return req"))
 
-(defn some-handle [req xs]
-  (some #(handle % req) xs))
+(defn some-process [req xs]
+  (some #(process % req) xs))
 
 (defn some-fill [req xs]
   (some #(fill % req) xs))

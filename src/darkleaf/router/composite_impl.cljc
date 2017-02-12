@@ -3,8 +3,8 @@
 
 (defrecord Composite [children]
   p/Item
-  (handle [_ req]
-    (p/some-handle req children))
+  (process [_ req]
+    (p/some-process req children))
   (fill [_ req]
     (p/some-fill req children)))
 

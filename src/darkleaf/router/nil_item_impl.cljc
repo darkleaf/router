@@ -3,7 +3,7 @@
 
 (deftype NilItem []
   p/Item
-  (handle [_ _] nil)
+  (process [_ _] nil)
   (fill [_ _] nil))
 
 (defn nil-item []

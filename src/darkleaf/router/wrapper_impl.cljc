@@ -4,10 +4,10 @@
 
 (defrecord Wrapper [middleware children]
   p/Item
-  (handle [_ req]
+  (process [_ req]
     (-> req
         (update k/middlewares conj middleware)
-        (p/some-handle children)))
+        (p/some-process children)))
   (fill [_ req]
     (p/some-fill req children)))
 

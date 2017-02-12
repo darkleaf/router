@@ -405,3 +405,14 @@
       (is (= [:page] (::r/scope returned-req))))
     (testing ::r/params
       (is (= {:page-id "1"} (::r/params returned-req))))))
+
+(deftest async
+  (let [pages-controller {:index (fn [req resp raise] (resp "index resp"))}
+        pages (r/resources :pages :page pages-controller)
+        handler (r/make-handler pages)]
+    #?(:clj
+       (let [resp-promise (promise)
+             resp (partial deliver resp-promise)
+             raise (constantly nil)]
+         (handler {:uri "/pages", :request-method :get} resp raise)
+         (is (= "index resp" (deref resp-promise 0 :timeout)))))))
