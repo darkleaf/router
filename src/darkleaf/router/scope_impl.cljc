@@ -4,12 +4,12 @@
 
 (defrecord Scope [id handle-impl fill-impl middleware children]
   p/Item
-  (handle [_ req]
+  (process [_ req]
     (some-> req
             (handle-impl)
             (update k/scope conj id)
             (update k/middlewares conj middleware)
-            (p/some-handle children)))
+            (p/some-process children)))
   (fill [_ req]
     (when (= id (peek (k/scope req)))
       (-> req

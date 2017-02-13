@@ -30,13 +30,22 @@
           (assoc r :uri (segments->uri (k/segments r)))
           (dissoc r k/action k/scope k/params k/segments))))))
 
+
 (defn make-handler [item]
-  (let [request-for (make-request-for item)]
-    (fn [req]
-      (as-> req r
-        (assoc r k/request-for request-for)
-        (assoc r k/scope empty-scope)
-        (assoc r k/params {})
-        (assoc r k/segments (uri->segments (:uri r)))
-        (assoc r k/middlewares empty-middlewares)
-        (p/handle item r)))))
+  (let [request-for (make-request-for item)
+        set-init (fn [req]
+                   (assoc req
+                          k/request-for request-for
+                          k/scope empty-scope
+                          k/params {}
+                          k/segments (uri->segments (:uri req))
+                          k/middlewares empty-middlewares))]
+    (fn
+      ([req]
+       (let [req (set-init req)
+             [req handler] (p/process item req)]
+         (handler req)))
+      ([req resp raise]
+       (let [req (set-init req)
+             [req handler] (p/process item req)]
+         (handler req resp raise))))))
