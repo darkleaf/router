@@ -405,15 +405,3 @@
       (is (= [:page] (::r/scope returned-req))))
     (testing ::r/params
       (is (= {:page-id "1"} (::r/params returned-req))))))
-
-(deftest async-handler
-  (let [pages-controller {:index (fn [req resp raise] (resp "index resp"))}
-        pages (r/resources :pages :page pages-controller)
-        handler (r/make-handler pages)
-        test-req {:uri "/pages", :request-method :get}
-        done? (atom false)
-        check (fn [val]
-                (is (= "index resp" val))
-                (reset! done? true))]
-    (handler test-req check check)
-    (is @done?)))
