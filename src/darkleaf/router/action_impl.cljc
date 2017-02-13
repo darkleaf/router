@@ -20,10 +20,10 @@
             (assoc k/action id)
             (process-with-middlewares handler)))
   (fill [_ req]
-        (when (and (= id (k/action req))
-                   (empty? (k/scope req)))
-          (-> req
-              (fill-impl)))))
+    (when (and (= id (k/action req))
+               (empty? (k/scope req)))
+      (-> req
+          (fill-impl)))))
 
 (defn action
   ([id request-method handler]
