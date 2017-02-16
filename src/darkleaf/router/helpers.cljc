@@ -26,6 +26,7 @@
                        k/params params
                        k/segments empty-segments}]
       (when-let [req (p/fill item initial-req)]
+        (assert (-> req k/scope empty?))
         (as-> req r
           (assoc r :uri (segments->uri (k/segments r)))
           (dissoc r k/action k/scope k/params k/segments))))))
