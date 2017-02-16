@@ -16,7 +16,6 @@
   (process [_ req]
     (some-> req
             (handle-impl)
-            (dissoc k/segments)
             (assoc k/action id)
             (process-with-middlewares handler)))
   (fill [_ req]
