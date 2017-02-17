@@ -36,18 +36,21 @@
                    k/scope empty-scope
                    k/params {}
                    k/segments (uri->segments (:uri req))
-                   k/middlewares empty-middlewares)
-        [handler req] (p/process item req)
-        ;; может вернуться nil, если нет подходящего маршрута
-        ;; надо это как-то обрабатывать
-        _ (assert (-> req k/segments empty?))
-        _ (assert (-> req k/action keyword?))
-        middleware (apply comp (k/middlewares req))
-        handler (middleware handler)
-        req (dissoc req
-                    k/middlewares
-                    k/segments)]
-    [handler req]))
+                   k/middlewares empty-middlewares)]
+    (when-let [[handler req] (p/process item req)]
+      (assert (-> req k/segments empty?))
+      (assert (-> req k/action keyword?))
+      (let [middleware (apply comp (k/middlewares req))
+            handler (middleware handler)
+            req (dissoc req
+                        k/middlewares
+                        k/segments)]
+        [handler req]))))
+
+(def not-found
+  {:status 404
+   :headers {}
+   :body "404 error"})
 
 (defn make-handler [item]
   (let [request-for (make-request-for item)
@@ -55,10 +58,14 @@
                        (assoc req k/request-for request-for))]
     (fn
       ([req]
-       (let [[handler req] (process item req)
-             req (post-process req)]
-         (handler req)))
+       (if-let [[handler req] (process item req)]
+         (-> req
+             (post-process)
+             (handler))
+         not-found))
       ([req resp raise]
-       (let [[handler req] (process item req)
-             req (post-process req)]
-         (handler req resp raise))))))
+       (if-let [[handler req] (process item req)]
+         (-> req
+             (post-process)
+             (handler resp raise))
+         (resp not-found))))))
