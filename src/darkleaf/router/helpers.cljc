@@ -31,22 +31,34 @@
           (assoc r :uri (segments->uri (k/segments r)))
           (dissoc r k/action k/scope k/params k/segments))))))
 
+(defn- process [item req]
+  (let [req (assoc req
+                   k/scope empty-scope
+                   k/params {}
+                   k/segments (uri->segments (:uri req))
+                   k/middlewares empty-middlewares)
+        [handler req] (p/process item req)
+        ;; может вернуться nil, если нет подходящего маршрута
+        ;; надо это как-то обрабатывать
+        _ (assert (-> req k/segments empty?))
+        _ (assert (-> req k/action keyword?))
+        middleware (apply comp (k/middlewares req))
+        handler (middleware handler)
+        req (dissoc req
+                    k/middlewares
+                    k/segments)]
+    [handler req]))
 
 (defn make-handler [item]
   (let [request-for (make-request-for item)
-        set-init (fn [req]
-                   (assoc req
-                          k/request-for request-for
-                          k/scope empty-scope
-                          k/params {}
-                          k/segments (uri->segments (:uri req))
-                          k/middlewares empty-middlewares))]
+        post-process (fn [req]
+                       (assoc req k/request-for request-for))]
     (fn
       ([req]
-       (let [req (set-init req)
-             [req handler] (p/process item req)]
+       (let [[handler req] (process item req)
+             req (post-process req)]
          (handler req)))
       ([req resp raise]
-       (let [req (set-init req)
-             [req handler] (p/process item req)]
+       (let [[handler req] (process item req)
+             req (post-process req)]
          (handler req resp raise))))))

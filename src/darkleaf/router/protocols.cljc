@@ -3,7 +3,7 @@
 
 (defprotocol Item
   (process [this req]
-    "return [req handler]")
+    "return [handler req]")
   (fill [this req-template]
     "return req"))
 

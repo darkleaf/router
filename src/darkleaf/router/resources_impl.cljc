@@ -1,61 +1,98 @@
 (ns darkleaf.router.resources-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.scope-impl :refer [scope]]
-            [darkleaf.router.action-impl :refer [action]]
-            [darkleaf.router.composite-impl :refer [composite]]
+            [darkleaf.router.protocols :as p]
+            [darkleaf.router.wrapper-impl :refer [wrapper]]
+            [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
             [darkleaf.router.util :as util]))
 
-(defn- resources-collection-scope [scope-id segment middleware & children]
+(deftype CollectionWithoutSegment [id children]
+  p/Item
+  (process [_ req]
+    (-> req
+        (update k/scope conj id)
+        (p/some-process children)))
+  (fill [_ req]
+    (when (= id (peek (k/scope req)))
+      (-> req
+          (update k/scope pop)
+          (p/some-fill children)))))
+
+(deftype Collection [id segment children]
+  p/Item
+  (process [_ req]
+    (when (= segment (-> req k/segments peek))
+      (-> req
+          (update k/segments pop)
+          (update k/scope conj id)
+          (p/some-process children))))
+  (fill [_ req]
+    (when (= id (peek (k/scope req)))
+      (-> req
+          (update k/scope pop)
+          (update k/segments conj segment)
+          (p/some-fill children)))))
+
+(defn- collection-scope [id segment & children]
+  (let [children (remove nil? children)]
+    (cond
+      (empty? children) (nil-item)
+      segment (Collection. id segment children)
+      :else (CollectionWithoutSegment. id children))))
+
+(defn handle-segment [req segment]
+  (when (= segment (-> req k/segments peek))
+    (update req k/segments pop)))
+
+(defn handle-key [req key]
+  (when-let [val (-> req k/segments peek)]
+    (-> req
+        (update k/segments pop)
+        (assoc-in [k/params key] val))))
+
+(deftype MemberWithoutSegment [id key children]
+  p/Item
+  (process [_ req]
+    (some-> req
+            (handle-key key)
+            (update k/scope conj id)
+            (p/some-process children)))
+  (fill [_ req]
+    (let [val (get-in req [k/params key])]
+      (when (some? val)
+        (-> req
+            (update k/segments conj val)
+            (update k/scope pop)
+            (p/some-fill children))))))
+
+(deftype Member [id key segment children]
+  p/Item
+  (process [_ req]
+    (some-> req
+            (handle-segment segment)
+            (handle-key key)
+            (update k/scope conj id)
+            (p/some-process children)))
+  (fill [_ req]
+    (let [val (get-in req [k/params key])]
+      (when (and (= id (-> req k/scope peek))
+                 (some? val))
+        (-> req
+            (update k/segments conj segment val)
+            (update k/scope pop)
+            (p/some-fill children))))))
+
+(defn- member-scope [singular-name segment & children]
   (let [children (remove nil? children)
-        handle-impl (if segment
-                      (fn [req]
-                        (when (= segment (peek (k/segments req)))
-                          (update req k/segments pop)))
-                      identity)
-        fill-impl (if segment
-                    (fn [req]
-                      (update req k/segments conj segment))
-                    identity)]
-    (if (seq children)
-      (scope scope-id handle-impl fill-impl middleware children)
-      (nil-item))))
+        key (keyword (str (name singular-name) "-id"))]
+    (cond
+      (empty? children) (nil-item)
+      segment (Member. singular-name key segment children)
+      :else (MemberWithoutSegment. singular-name key children))))
 
-(defn- resources-member-scope [singular-name segment middleware & children]
-  (let [children (remove nil? children)
-        id-key (keyword (str (name singular-name) "-id"))
-        handle-impl (if segment
-                      (fn [req]
-                        (let [segments (k/segments req)
-                              given-segment (peek segments)
-
-                              segments (pop segments)
-                              given-id (peek segments)
-
-                              segments (pop segments)]
-                          (when (and (= segment given-segment)
-                                     (some? given-id))
-                            (-> req
-                                (assoc k/segments segments)
-                                (assoc-in [k/params id-key] given-id)))))
-                      (fn [req]
-                        (let [segments (k/segments req)
-                              given-id (peek segments)
-                              segments (pop segments)]
-                          (when (some? given-id)
-                            (-> req
-                                (assoc k/segments segments)
-                                (assoc-in [k/params id-key] given-id))))))
-        fill-impl (if segment
-                    (fn [req]
-                      (when-let [id (get-in req [k/params id-key])]
-                        (update req k/segments conj segment id)))
-                    (fn [req]
-                      (when-let [id (get-in req [k/params id-key])]
-                        (update req k/segments conj id))))]
-    (if (seq children)
-     (scope singular-name handle-impl fill-impl middleware children)
-     (nil-item))))
+(defn- controller-action [id request-mehod segments controller]
+  (when-let [handler (get controller id)]
+    (action/build id request-mehod segments handler)))
 
 (defn resources [& args]
   (let [[plural-name singular-name controller
@@ -63,40 +100,21 @@
           :or {segment (name plural-name)}}
          nested]
         (util/parse-args 3 args)]
-    (let [index-action   (when-let [handler (:index controller)]
-                           (action :index :get handler))
-          new-action     (when-let [handler (:new controller)]
-                           (action :new :get "new" handler))
-          create-action  (when-let [handler (:create controller)]
-                           (action :create :post handler))
-          show-action    (when-let [handler (:show controller)]
-                           (action :show :get handler))
-          edit-action    (when-let [handler (:edit controller)]
-                           (action :edit :get "edit" handler))
-          update-action  (when-let [handler (:update controller)]
-                           (action :update :patch handler))
-          put-action     (when-let [handler (:put controller)]
-                           (action :put :put handler))
-          destroy-action (when-let [handler (:destroy controller)]
-                           (action :destroy :delete handler))
-          middleware (get controller :middleware identity)
+    (let [middleware (get controller :middleware identity)
           collection-middleware (get controller :collection-middleware identity)
-          member-middleware (get controller :member-middleware identity)
-          middleware-for-collection (comp middleware collection-middleware)
-          middleware-for-member (comp middleware member-middleware)]
-      (composite
-       (resources-collection-scope plural-name segment
-                                   middleware-for-collection
-                                   index-action)
-       (resources-collection-scope singular-name segment
-                                   middleware-for-collection
-                                   new-action
-                                   create-action)
-       (apply resources-member-scope singular-name segment
-              middleware-for-member
-              (into nested
-                    [edit-action
-                     show-action
-                     update-action
-                     destroy-action
-                     put-action]))))))
+          member-middleware (get controller :member-middleware identity)]
+      (wrapper middleware
+               (wrapper collection-middleware
+                        (collection-scope plural-name segment
+                                          (controller-action :index :get [] controller))
+                        (collection-scope singular-name segment
+                                          (controller-action :new :get ["new"] controller)
+                                          (controller-action :create :post [] controller)))
+               (wrapper member-middleware
+                        (apply member-scope singular-name segment
+                               (controller-action :show :get [] controller)
+                               (controller-action :edit :get ["edit"] controller)
+                               (controller-action :update :patch [] controller)
+                               (controller-action :destroy :delete [] controller)
+                               (controller-action :put :put [] controller)
+                               nested))))))

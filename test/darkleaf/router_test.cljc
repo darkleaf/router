@@ -25,6 +25,7 @@
                             :destroy (fn [req] "destroy resp")}
           pages (r/resources :pages :page pages-controller)
           pages-testing (partial route-testing pages)]
+
       (pages-testing :index [:pages] {}
                      {:uri "/pages", :request-method :get}
                      "index resp")
