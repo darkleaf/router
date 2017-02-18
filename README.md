@@ -46,7 +46,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 | Action name | Scope | Params | Http method | Url | Type | Used for |
 | --- | --- | --- | --- | --- | --- | --- |
 | index   | [:pages] | {}        | Get    | /pages        | collection | display a list of pages  |
-| show    | [:page]  | {:page 1} | Get    | /pages/1      | member     | display a specific page |
+| show    | [:page]  | {:page&nbsp;1} | Get    | /pages/1      | member     | display a specific page |
 | new     | [:page]  | {}        | Get    | /pages/new    | collection | display a form for creating new page |
 | create  | [:page]  | {}        | Post   | /pages        | collection | create a new page |
 | edit    | [:page]  | {:page 1} | Get    | /pages/1/edit | member     | display a form for updating page |
