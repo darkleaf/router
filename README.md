@@ -38,7 +38,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
    :create (fn [req] (response "successfully created"))})
 
 (r/resources :projects :project projects-controller
-             (r/resource :completition project-completion-controller)
+             (r/resource :completion project-completion-controller)
 ```
 
 ## Resources
