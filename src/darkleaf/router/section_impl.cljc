@@ -13,7 +13,7 @@
           (update k/middlewares conj middleware)
           (p/some-process children))))
   (fill [_ req]
-    (when (= id (peek (k/scope req)))
+    (when (= id (-> req k/scope peek))
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
