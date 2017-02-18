@@ -45,50 +45,49 @@
     (update req k/segments pop)))
 
 (defn handle-key [req key]
-  (when-let [val (-> req k/segments peek)]
+  (when-let [key-segment (-> req k/segments peek)]
     (-> req
         (update k/segments pop)
-        (assoc-in [k/params key] val))))
+        (assoc-in [k/params key] key-segment))))
 
-(deftype MemberWithoutSegment [id key children]
+(deftype MemberWithoutSegment [id children]
   p/Item
   (process [_ req]
     (some-> req
-            (handle-key key)
+            (handle-key id)
             (update k/scope conj id)
             (p/some-process children)))
   (fill [_ req]
-    (let [val (get-in req [k/params key])]
-      (when (some? val)
+    (let [key-segment (get-in req [k/params id])]
+      (when (some? key-segment)
         (-> req
-            (update k/segments conj val)
+            (update k/segments conj key-segment)
             (update k/scope pop)
             (p/some-fill children))))))
 
-(deftype Member [id key segment children]
+(deftype Member [id segment children]
   p/Item
   (process [_ req]
     (some-> req
             (handle-segment segment)
-            (handle-key key)
+            (handle-key id)
             (update k/scope conj id)
             (p/some-process children)))
   (fill [_ req]
-    (let [val (get-in req [k/params key])]
+    (let [key-segment (get-in req [k/params id])]
       (when (and (= id (-> req k/scope peek))
-                 (some? val))
+                 (some? key-segment))
         (-> req
-            (update k/segments conj segment val)
+            (update k/segments conj segment key-segment)
             (update k/scope pop)
             (p/some-fill children))))))
 
 (defn- member-scope [singular-name segment & children]
-  (let [children (remove nil? children)
-        key (keyword (str (name singular-name) "-id"))]
+  (let [children (remove nil? children)]
     (cond
       (empty? children) (nil-item)
-      segment (Member. singular-name key segment children)
-      :else (MemberWithoutSegment. singular-name key children))))
+      segment (Member. singular-name segment children)
+      :else (MemberWithoutSegment. singular-name children))))
 
 (defn- controller-action [id request-mehod segments controller]
   (when-let [handler (get controller id)]

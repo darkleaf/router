@@ -23,16 +23,16 @@
     (let [pages-controller {:index   (fn [req] "index resp")
                             :new     (fn [req] "new resp")
                             :create  (fn [req] "create resp")
-                            :show    (fn [req] (str "show resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :edit    (fn [req] (str "edit resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :update  (fn [req] (str "update resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :put     (fn [req] (str "put resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :destroy (fn [req] (str "destroy resp for "
-                                                    (-> req ::r/params :page-id)))}
+                            :show    (fn [req] (str "show "
+                                                    (-> req ::r/params :page)))
+                            :edit    (fn [req] (str "edit "
+                                                    (-> req ::r/params :page)))
+                            :update  (fn [req] (str "update "
+                                                    (-> req ::r/params :page)))
+                            :put     (fn [req] (str "put "
+                                                    (-> req ::r/params :page)))
+                            :destroy (fn [req] (str "destroy "
+                                                    (-> req ::r/params :page)))}
           pages (r/resources :pages :page pages-controller)
           pages-testing (partial route-testing pages)]
 
@@ -45,21 +45,21 @@
       (pages-testing :create [:page] {}
                      {:uri "/pages", :request-method :post}
                      "create resp")
-      (pages-testing :show [:page] {:page-id "some-id"}
-                     {:uri "/pages/some-id", :request-method :get}
-                     "show resp for some-id")
-      (pages-testing :edit [:page] {:page-id "some-id"}
-                     {:uri "/pages/some-id/edit", :request-method :get}
-                     "edit resp for some-id")
-      (pages-testing :update [:page] {:page-id "some-id"}
-                     {:uri "/pages/some-id", :request-method :patch}
-                     "update resp for some-id")
-      (pages-testing :put [:page] {:page-id "some-id"}
-                     {:uri "/pages/some-id", :request-method :put}
-                     "put resp for some-id")
-      (pages-testing :destroy [:page] {:page-id "some-id"}
-                     {:uri "/pages/some-id", :request-method :delete}
-                     "destroy resp for some-id")))
+      (pages-testing :show [:page] {:page "about"}
+                     {:uri "/pages/about", :request-method :get}
+                     "show about")
+      (pages-testing :edit [:page] {:page "about"}
+                     {:uri "/pages/about/edit", :request-method :get}
+                     "edit about")
+      (pages-testing :update [:page] {:page "about"}
+                     {:uri "/pages/about", :request-method :patch}
+                     "update about")
+      (pages-testing :put [:page] {:page "about"}
+                     {:uri "/pages/about", :request-method :put}
+                     "put about")
+      (pages-testing :destroy [:page] {:page "about"}
+                     {:uri "/pages/about", :request-method :delete}
+                     "destroy about")))
   (testing "specific segment"
     (let [people-controller {:index   (fn [req] "index resp")
                              :show    (fn [req] "show resp")
@@ -81,35 +81,35 @@
       (people-testing :create [:person] {}
                       {:uri "/menschen", :request-method :post}
                       "create resp")
-      (people-testing :show [:person] {:person-id "some-id"}
+      (people-testing :show [:person] {:person "some-id"}
                       {:uri "/menschen/some-id", :request-method :get}
                       "show resp")
-      (people-testing :edit [:person] {:person-id "some-id"}
+      (people-testing :edit [:person] {:person "some-id"}
                       {:uri "/menschen/some-id/edit", :request-method :get}
                       "edit resp")
-      (people-testing :update [:person] {:person-id "some-id"}
+      (people-testing :update [:person] {:person "some-id"}
                       {:uri "/menschen/some-id", :request-method :patch}
                       "update resp")
-      (people-testing :put [:person] {:person-id "some-id"}
+      (people-testing :put [:person] {:person "some-id"}
                       {:uri "/menschen/some-id", :request-method :put}
                       "put resp")
-      (people-testing :destroy [:person] {:person-id "some-id"}
+      (people-testing :destroy [:person] {:person "some-id"}
                       {:uri "/menschen/some-id", :request-method :delete}
                       "destroy resp")))
   (testing "without segment"
     (let [pages-controller {:index   (fn [req] "index resp")
                             :new     (fn [req] "new resp")
                             :create  (fn [req] "create resp")
-                            :show    (fn [req] (str "show resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :edit    (fn [req] (str "edit resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :update  (fn [req] (str "update resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :put     (fn [req] (str "put resp for "
-                                                    (-> req ::r/params :page-id)))
-                            :destroy (fn [req] (str "destroy resp for "
-                                                    (-> req ::r/params :page-id)))}
+                            :show    (fn [req] (str "show "
+                                                    (-> req ::r/params :page)))
+                            :edit    (fn [req] (str "edit "
+                                                    (-> req ::r/params :page)))
+                            :update  (fn [req] (str "update "
+                                                    (-> req ::r/params :page)))
+                            :put     (fn [req] (str "put "
+                                                    (-> req ::r/params :page)))
+                            :destroy (fn [req] (str "destroy "
+                                                    (-> req ::r/params :page)))}
           pages (r/resources :pages :page pages-controller
                              :segment false)
           pages-testing (partial route-testing pages)]
@@ -122,38 +122,40 @@
       (pages-testing :create [:page] {}
                      {:uri "", :request-method :post}
                      "create resp")
-      (pages-testing :show [:page] {:page-id "some-id"}
-                     {:uri "/some-id", :request-method :get}
-                     "show resp for some-id")
-      (pages-testing :edit [:page] {:page-id "some-id"}
-                     {:uri "/some-id/edit", :request-method :get}
-                     "edit resp for some-id")
-      (pages-testing :update [:page] {:page-id "some-id"}
-                     {:uri "/some-id", :request-method :patch}
-                     "update resp for some-id")
-      (pages-testing :put [:page] {:page-id "some-id"}
-                     {:uri "/some-id", :request-method :put}
-                     "put resp for some-id")
-      (pages-testing :destroy [:page] {:page-id "some-id"}
-                     {:uri "/some-id", :request-method :delete}
-                     "destroy resp for some-id")))
+      (pages-testing :show [:page] {:page "some"}
+                     {:uri "/some", :request-method :get}
+                     "show some")
+      (pages-testing :edit [:page] {:page "some"}
+                     {:uri "/some/edit", :request-method :get}
+                     "edit some")
+      (pages-testing :update [:page] {:page "some"}
+                     {:uri "/some", :request-method :patch}
+                     "update some")
+      (pages-testing :put [:page] {:page "some"}
+                     {:uri "/some", :request-method :put}
+                     "put some")
+      (pages-testing :destroy [:page] {:page "some"}
+                     {:uri "/some", :request-method :delete}
+                     "destroy some")))
   (testing "nested"
     (let [pages-controller {:index (fn [req] "some")
                             :show (fn [req] "pages show resp")}
           comments-controller {:show (fn [req] "show resp")}
-          star-controller {:show (fn [req] "star show resp")}
+          star-controller {:show (fn [req] (str "page "
+                                                (-> req ::r/params :page)
+                                                " star show resp"))}
           routes (r/resources :pages :page pages-controller
                               (r/resources :comments :comment comments-controller)
                               (r/resource :star star-controller))
           routes-testing (partial route-testing routes)]
-      (routes-testing :show [:page :comment] {:page-id "some-page-id"
-                                              :comment-id "some-comment-id"}
-                      {:uri "/pages/some-page-id/comments/some-comment-id"
+      (routes-testing :show [:page :comment] {:page "some-page"
+                                              :comment "some-comment"}
+                      {:uri "/pages/some-page/comments/some-comment"
                        :request-method :get}
                       "show resp")
-      (routes-testing :show [:page :star] {:page-id 1}
+      (routes-testing :show [:page :star] {:page 1}
                       {:uri "/pages/1/star", :request-method :get}
-                      "star show resp")))
+                      "page 1 star show resp")))
   (testing "middleware"
     (let [pages-controller {:middleware (make-middleware "pages")
                             :collection-middleware (make-middleware "collection")
@@ -302,8 +304,8 @@
           routes (r/resource :star star-controller
                              (r/resources :comments :comment comments-controller))
           routes-testing (partial route-testing routes)]
-      (routes-testing :show [:star :comment] {:comment-id "some-comment-id"}
-                      {:uri "/star/comments/some-comment-id"
+      (routes-testing :show [:star :comment] {:comment "some-comment"}
+                      {:uri "/star/comments/some-comment"
                        :request-method :get}
                       "show resp")))
   (testing "middleware"
@@ -352,12 +354,12 @@
                 (r/resources :posts :post posts-controller)
                 (r/resources :news :news news-controller))
         routes-testing (partial route-testing routes)]
-    (routes-testing :show [:post] {:post-id "some-post-id"}
-                    {:uri "/posts/some-post-id"
+    (routes-testing :show [:post] {:post "some-post"}
+                    {:uri "/posts/some-post"
                      :request-method :get}
                     "show post resp")
-    (routes-testing :show [:news] {:news-id "some-news-id"}
-                    {:uri "/news/some-news-id"
+    (routes-testing :show [:news] {:news "some-news"}
+                    {:uri "/news/some-news"
                      :request-method :get}
                     "show news resp")))
 
@@ -439,4 +441,4 @@
     (testing ::r/scope
       (is (= [:page] (::r/scope returned-req))))
     (testing ::r/params
-      (is (= {:page-id "1"} (::r/params returned-req))))))
+      (is (= {:page "1"} (::r/params returned-req))))))
