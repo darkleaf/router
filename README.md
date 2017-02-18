@@ -185,7 +185,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 ## Helpers
 
 ``` clojure
-(def controller {:index (fn [_] "ok")})
+(def controller {:index (fn [_] (response "ok"))})
 (def pages (resources :pages :page controller))
 
 (def handler (make-handler pages))
