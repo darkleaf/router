@@ -115,9 +115,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
    :update  (fn [req] (response "update resp"))
    :put     (fn [req] (response "put resp"))
    :destroy (fn [req] (response "destroy resp"))})
-```
 
-``` clojure
 ;; :show [:star] {} -> /star
 (r/resource :star star-controller)
 
