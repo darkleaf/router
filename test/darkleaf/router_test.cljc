@@ -442,3 +442,25 @@
       (is (= [:page] (::r/scope returned-req))))
     (testing ::r/params
       (is (= {:page "1"} (::r/params returned-req))))))
+
+(deftest mount
+  (let [forum-controller {:show (fn [req] "main")}
+        forum-topics-controller {:index (fn [req] "")
+                                 :show (fn [req] (-> req ::r/params :forum/topic))}
+        forum (r/composite
+               (r/resource :forum/main forum-controller
+                           :segment false)
+               (r/resources :forum/topics :forum/topic forum-topics-controller))
+        sites-controller {}
+        routes (r/resources :sites :site sites-controller
+                            (r/mount forum :segment "forum"))
+        routes-testing (partial route-testing routes)]
+    (routes-testing :show [:site :forum/main] {:site "1"}
+                    {:uri "/sites/1/forum", :request-method :get}
+                    "main")
+    (routes-testing :index [:site :forum/topics] {:site "1"}
+                    {:uri "/sites/1/forum/topics", :request-method :get}
+                    "")
+    (routes-testing :show [:site :forum/topic] {:site "1", :forum/topic "2"}
+                    {:uri "/sites/1/forum/topics/2", :request-method :get}
+                    "2")))
