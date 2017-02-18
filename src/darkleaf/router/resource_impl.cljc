@@ -1,51 +1,63 @@
 (ns darkleaf.router.resource-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.scope-impl :refer [scope]]
-            [darkleaf.router.action-impl :refer [action]]
+            [darkleaf.router.protocols :as p]
+            [darkleaf.router.wrapper-impl :refer [wrapper]]
+            [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
-            [darkleaf.router.util :as util]))
+            [darkleaf.router.args :as args]))
 
-(defn- resource-scope [scope-id segment middleware & children]
-  (let [children (remove nil? children)
-        handle-impl (if segment
-                      (fn [req]
-                        (when (= segment (peek (k/segments req)))
-                          (update req k/segments pop)))
-                      identity)
-        fill-impl (if segment
-                    (fn [req]
-                      (update req k/segments conj segment))
-                    identity)]
-    (if (seq children)
-      (scope scope-id handle-impl fill-impl middleware children)
-      (nil-item))))
+(deftype ScopeWithoutSegment [id children]
+  p/Item
+  (process [_ req]
+    (-> req
+        (update k/scope conj id)
+        (p/some-process children)))
+  (fill [_ req]
+    (when (= id (peek (k/scope req)))
+      (-> req
+          (update k/scope pop)
+          (p/some-fill children)))))
+
+(deftype Scope [id segment children]
+  p/Item
+  (process [_ req]
+    (when (= segment (-> req k/segments peek))
+      (-> req
+          (update k/segments pop)
+          (update k/scope conj id)
+          (p/some-process children))))
+  (fill [_ req]
+    (when (= id (peek (k/scope req)))
+      (-> req
+          (update k/scope pop)
+          (update k/segments conj segment)
+          (p/some-fill children)))))
+
+(defn- resource-scope [id segment & children]
+  (let [children (remove nil? children)]
+    (cond
+      (empty? children) (nil-item)
+      segment (Scope. id segment children)
+      :else (ScopeWithoutSegment. id children))))
+
+(defn- controller-action [id request-mehod segments controller]
+  (when-let [handler (get controller id)]
+    (action/build id request-mehod segments handler)))
 
 (defn resource [& args]
   (let [[singular-name controller
          {:keys [segment], :or {segment (name singular-name)}}
          nested]
-        (util/parse-args 2 args)]
-    (let [new-action     (when-let [handler (:new controller)]
-                           (action :new :get "new" handler))
-          create-action  (when-let [handler (:create controller)]
-                           (action :create :post handler))
-          show-action    (when-let [handler (:show controller)]
-                           (action :show :get handler))
-          edit-action    (when-let [handler (:edit controller)]
-                           (action :edit :get "edit" handler))
-          update-action  (when-let [handler (:update controller)]
-                           (action :update :patch handler))
-          put-action     (when-let [handler (:put controller)]
-                           (action :put :put handler))
-          destroy-action (when-let [handler (:destroy controller)]
-                           (action :destroy :delete handler))
-          middleware (get controller :middleware identity)]
-      (apply resource-scope singular-name segment middleware
-             new-action
-             create-action
-             show-action
-             edit-action
-             update-action
-             put-action
-             destroy-action
-             nested))))
+        (args/parse 2 args)]
+    (let [middleware (get controller :middleware identity)]
+      (wrapper
+       middleware
+       (apply resource-scope singular-name segment
+              (controller-action :new :get ["new"] controller)
+              (controller-action :create :post [] controller)
+              (controller-action :show :get [] controller)
+              (controller-action :edit :get ["edit"] controller)
+              (controller-action :update :patch [] controller)
+              (controller-action :put :put [] controller)
+              (controller-action :destroy :delete [] controller)
+              nested)))))

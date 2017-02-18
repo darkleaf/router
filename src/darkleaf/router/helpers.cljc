@@ -26,26 +26,46 @@
                        k/params params
                        k/segments empty-segments}]
       (when-let [req (p/fill item initial-req)]
+        (assert (-> req k/scope empty?))
         (as-> req r
           (assoc r :uri (segments->uri (k/segments r)))
           (dissoc r k/action k/scope k/params k/segments))))))
 
+(defn- process [item req]
+  (let [req (assoc req
+                   k/scope empty-scope
+                   k/params {}
+                   k/segments (uri->segments (:uri req))
+                   k/middlewares empty-middlewares)]
+    (when-let [[handler req] (p/process item req)]
+      (assert (-> req k/segments empty?))
+      (assert (-> req k/action keyword?))
+      (let [middleware (apply comp (k/middlewares req))
+            handler (middleware handler)
+            req (dissoc req
+                        k/middlewares
+                        k/segments)]
+        [handler req]))))
+
+(def not-found
+  {:status 404
+   :headers {}
+   :body "404 error"})
 
 (defn make-handler [item]
   (let [request-for (make-request-for item)
-        set-init (fn [req]
-                   (assoc req
-                          k/request-for request-for
-                          k/scope empty-scope
-                          k/params {}
-                          k/segments (uri->segments (:uri req))
-                          k/middlewares empty-middlewares))]
+        post-process (fn [req]
+                       (assoc req k/request-for request-for))]
     (fn
       ([req]
-       (let [req (set-init req)
-             [req handler] (p/process item req)]
-         (handler req)))
+       (if-let [[handler req] (process item req)]
+         (-> req
+             (post-process)
+             (handler))
+         not-found))
       ([req resp raise]
-       (let [req (set-init req)
-             [req handler] (p/process item req)]
-         (handler req resp raise))))))
+       (if-let [[handler req] (process item req)]
+         (-> req
+             (post-process)
+             (handler resp raise))
+         (resp not-found))))))
