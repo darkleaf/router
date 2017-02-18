@@ -4,7 +4,7 @@
             [darkleaf.router.wrapper-impl :refer [wrapper]]
             [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
-            [darkleaf.router.util :as util]))
+            [darkleaf.router.args :as args]))
 
 (deftype CollectionWithoutSegment [id children]
   p/Item
@@ -99,7 +99,7 @@
          {:keys [segment nested]
           :or {segment (name plural-name)}}
          nested]
-        (util/parse-args 3 args)]
+        (args/parse 3 args)]
     (let [middleware (get controller :middleware identity)
           collection-middleware (get controller :collection-middleware identity)
           member-middleware (get controller :member-middleware identity)]

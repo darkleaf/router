@@ -1,7 +1,7 @@
 (ns darkleaf.router.section-impl
   (:require [darkleaf.router.protocols :as p]
             [darkleaf.router.keywords :as k]
-            [darkleaf.router.util :as util]))
+            [darkleaf.router.args :as args]))
 
 (deftype Section [id segment middleware children]
   p/Item
@@ -25,5 +25,5 @@
           :or {middleware identity
                segment (name id)}}
          children]
-        (util/parse-args 1 args)]
+        (args/parse 1 args)]
     (Section. id segment middleware children)))

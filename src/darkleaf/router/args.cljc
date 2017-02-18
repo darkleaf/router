@@ -1,6 +1,6 @@
-(ns darkleaf.router.util)
+(ns darkleaf.router.args)
 
-(defn parse-args [ordinal-args-count xs]
+(defn parse [ordinal-args-count xs]
   {:pre (< ordinal-args-count (count xs))}
   (let [ordinal-args (take ordinal-args-count xs)
         xs (drop ordinal-args-count xs)]

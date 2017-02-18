@@ -4,7 +4,7 @@
             [darkleaf.router.wrapper-impl :refer [wrapper]]
             [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
-            [darkleaf.router.util :as util]))
+            [darkleaf.router.args :as args]))
 
 (deftype ScopeWithoutSegment [id children]
   p/Item
@@ -48,7 +48,7 @@
   (let [[singular-name controller
          {:keys [segment], :or {segment (name singular-name)}}
          nested]
-        (util/parse-args 2 args)]
+        (args/parse 2 args)]
     (let [middleware (get controller :middleware identity)]
       (wrapper
        middleware
