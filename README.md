@@ -55,11 +55,11 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 | destroy | [:page]  | {:page-id 1} | Delete | /pages/1      | member     | delete a specific page |
 
 ``` clojure
-;; all keys are optional
 (ns app.some-ns
   (:require [darkleaf.router :as r]
             [ring.util.response :refer [response]]))
 
+;; all keys are optional
 (def pages-controller
   {:middleware            (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
    :collection-middleware (fn [h] (fn [req] (h req)))
