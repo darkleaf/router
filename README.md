@@ -31,11 +31,11 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
 ``` clojure
 (def projects-controller
-  {:index (fn [req] "projects list")
-   :show (fn [req] "project page"})
+  {:index (fn [req] (response "projects list"))
+   :show (fn [req] (response "project page"))})
 (def project-completion-controller
-  {:new (fn [req] "completion form")
-   :create (fn [req] "successfully created")})
+  {:new (fn [req] (response "completion form"))
+   :create (fn [req] (response "successfully created"))})
 
 (r/resources :projects :project projects-controller
              (r/resource :completition project-completion-controller)
@@ -56,21 +56,23 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
 ``` clojure
 ;; all keys are optional
+(ns app.some-ns
+  (:require [darkleaf.router :as r]
+            [ring.util.response :refer [response]]))
+
 (def pages-controller
   {:middleware            (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
    :collection-middleware (fn [h] (fn [req] (h req)))
    :member-middleware     (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
-   :index   (fn [req] "index resp")
-   :show    (fn [req] "show resp")
-   :new     (fn [req] "new resp")
-   :create  (fn [req] "create resp")
-   :edit    (fn [req] "edit resp")
-   :update  (fn [req] "update resp")
-   :put     (fn [req] "put resp")
-   :destroy (fn [req] "destroy resp")})
-```
+   :index   (fn [req] (response "index resp"))
+   :show    (fn [req] (response "show resp"))
+   :new     (fn [req] (response "new resp"))
+   :create  (fn [req] (response "create resp"))
+   :edit    (fn [req] (response "edit resp"))
+   :update  (fn [req] (response "update resp"))
+   :put     (fn [req] (response "put resp"))
+   :destroy (fn [req] (response "destroy resp"))})
 
-``` clojure
 ;; :index [:pages] {} -> /pages
 ;; :show [:page] {:page-id 1} -> /pages/1
 (r/resources :pages :page pages-controller)
@@ -106,13 +108,13 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 ;; all keys are optional
 (def star-controller
   {:middleware (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
-   :show    (fn [req] "show resp")
-   :new     (fn [req] "new resp")
-   :create  (fn [req] "create resp")
-   :edit    (fn [req] "edit resp")
-   :update  (fn [req] "update resp")
-   :put     (fn [req] "put resp")
-   :destroy (fn [req] "destroy resp")})
+   :show    (fn [req] (response "show resp"))
+   :new     (fn [req] (response "new resp"))
+   :create  (fn [req] (response "create resp"))
+   :edit    (fn [req] (response "edit resp"))
+   :update  (fn [req] (response "update resp"))
+   :put     (fn [req] (response "put resp"))
+   :destroy (fn [req] (response "destroy resp"))})
 ```
 
 ``` clojure
@@ -137,8 +139,8 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 Объединяет несколько роутов в один.
 
 ``` clojure
-(def posts-controller {:show (fn [req] "show post resp")})
-(def news-controller {:show (fn [req] "show news resp")})
+(def posts-controller {:show (fn [req] (response "show post resp"))})
+(def news-controller {:show (fn [req] (response "show news resp"))})
 (def routes
   (r/composite
    (r/resources :posts :post posts-controller)
