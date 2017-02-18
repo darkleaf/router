@@ -38,21 +38,21 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
    :create (fn [req] (response "successfully created"))})
 
 (r/resources :projects :project projects-controller
-             (r/resource :completition project-completion-controller)
+             (r/resource :completion project-completion-controller)
 ```
 
 ## Resources
 
 | Action name | Scope | Params | Http method | Url | Type | Used for |
 | --- | --- | --- | --- | --- | --- | --- |
-| index   | [:pages] | {}           | Get    | /pages        | collection | display a list of pages  |
-| show    | [:page]  | {:page-id 1} | Get    | /pages/1      | member     | display a specific page |
-| new     | [:page]  | {}           | Get    | /pages/new    | collection | display a form for creating new page |
-| create  | [:page]  | {}           | Post   | /pages        | collection | create a new page |
-| edit    | [:page]  | {:page-id 1} | Get    | /pages/1/edit | member     | display a form for updating page |
-| update  | [:page]  | {:page-id 1} | Patch  | /pages/1      | member     | update a specific page |
-| put     | [:page]  | {:page-id 1} | Put    | /pages/1      | member     | upsert a specific page, may be combined with edit action |
-| destroy | [:page]  | {:page-id 1} | Delete | /pages/1      | member     | delete a specific page |
+| index   | [:pages] | {}        | Get    | /pages        | collection | display a list of pages  |
+| show    | [:page]  | {:page 1} | Get    | /pages/1      | member     | display a specific page |
+| new     | [:page]  | {}        | Get    | /pages/new    | collection | display a form for creating new page |
+| create  | [:page]  | {}        | Post   | /pages        | collection | create a new page |
+| edit    | [:page]  | {:page 1} | Get    | /pages/1/edit | member     | display a form for updating page |
+| update  | [:page]  | {:page 1} | Patch  | /pages/1      | member     | update a specific page |
+| put     | [:page]  | {:page 1} | Put    | /pages/1      | member     | upsert a specific page, may be combined with edit action |
+| destroy | [:page]  | {:page 1} | Delete | /pages/1      | member     | delete a specific page |
 
 ``` clojure
 (ns app.some-ns
@@ -74,20 +74,20 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
    :destroy (fn [req] (response "destroy resp"))})
 
 ;; :index [:pages] {} -> /pages
-;; :show [:page] {:page-id 1} -> /pages/1
+;; :show [:page] {:page 1} -> /pages/1
 (r/resources :pages :page pages-controller)
 
 ;; :index [:people] {} -> /menschen
-;; :show [:person] {:person-id 1} -> /menschen/1
+;; :show [:person] {:person 1} -> /menschen/1
 (r/resources :people :person people-controller
              :segment "menschen")
 
 ;; :index [:people] {} -> /
-;; :show [:person] {:person-id 1} -> /1
+;; :show [:person] {:person 1} -> /1
 (r/resources :people :person people-controller
              :segment false)
 
-;; :put [:page :star] {:page-id 1} -> PUT /pages/1/star
+;; :put [:page :star] {:page 1} -> PUT /pages/1/star
 (r/resources :pages :page pages-controller
              (r/resource :star star-controller)
 ```
@@ -96,13 +96,13 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 
 | Action name | Scope | Params | Http method | Url | Used for
 | --- | --- | --- | --- | --- | --- |
-| show    | [:star] | {} | Get    | /star/:star-id      | display a specific star |
-| new     | [:star] | {} | Get    | /star/new           | display a form for creating new star |
-| create  | [:star] | {} | Post   | /star               | create a new star |
-| edit    | [:star] | {} | Get    | /star/:star-id/edit | display a form for updating star |
-| update  | [:star] | {} | Patch  | /star/:star-id      | update a specific star |
-| put     | [:star] | {} | Put    | /star/:star-id      | upsert a specific star, may be combined with edit action |
-| destroy | [:star] | {} | Delete | /star/:star-id      | delete a specific star |
+| show    | [:star] | {} | Get    | /star      | display a specific star |
+| new     | [:star] | {} | Get    | /star/new  | display a form for creating new star |
+| create  | [:star] | {} | Post   | /star      | create a new star |
+| edit    | [:star] | {} | Get    | /star/edit | display a form for updating star |
+| update  | [:star] | {} | Patch  | /star      | update a specific star |
+| put     | [:star] | {} | Put    | /star      | upsert a specific star, may be combined with edit action |
+| destroy | [:star] | {} | Delete | /star      | delete a specific star |
 
 ``` clojure
 ;; all keys are optional
@@ -115,9 +115,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
    :update  (fn [req] (response "update resp"))
    :put     (fn [req] (response "put resp"))
    :destroy (fn [req] (response "destroy resp"))})
-```
 
-``` clojure
 ;; :show [:star] {} -> /star
 (r/resource :star star-controller)
 
