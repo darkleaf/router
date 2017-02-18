@@ -167,6 +167,19 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
            (r/resources :pages :page pages-controller))
 ```
 
+## Guard
+
+``` clojure
+;; :index [:locale :pages] {:locale "ru"} -> /ru/pages
+;; :index [:locale :pages] {:locale "wrong"} -> not found
+(r/guard :locale #{"ru" "en"}
+         (r/resources :pages :page pages-controller))
+
+(r/guard :locale #{"ru" "en"}
+         :middleware (fn [h] (fn [req] (h req)))
+         (r/resources :pages :page pages-controller))
+```
+
 ## Helpers
 
 ``` clojure

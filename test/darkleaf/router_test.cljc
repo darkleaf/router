@@ -386,6 +386,34 @@
           req {:uri "/pages", :request-method :get}]
       (is (= "wrapper // index resp" (handler req))))))
 
+(deftest guard
+  (testing "ordinal"
+    (let [pages-controller {:index (fn [req] (str (-> req ::r/params :locale)
+                                                  " index resp"))}
+          routes (r/guard :locale #{"ru" "en"}
+                          (r/resources :pages :page pages-controller))]
+      (testing "correct"
+        (let [routes-testing (partial route-testing routes)]
+          (routes-testing :index [:locale :pages] {:locale "ru"}
+                          {:uri "/ru/pages", :request-method :get}
+                          "ru index resp")))
+      (testing "wrong"
+        (let [handler (r/make-handler routes)]
+          (is (= 404
+                 (-> {:uri "/wrong/pages", :request-method :get}
+                     (handler)
+                     :status)))))))
+  (testing "middleware"
+    (let [pages-controller {:index (fn [req] (str (-> req ::r/params :locale)
+                                                  " index resp"))}
+          routes (r/guard :locale #{"ru" "en"}
+                          :middleware (make-middleware "guard")
+                          (r/resources :pages :page pages-controller))
+          handler (r/make-handler routes)]
+      (is (= "guard // ru index resp"
+             (-> {:uri "/ru/pages", :request-method :get}
+                 (handler)))))))
+
 (deftest request-keys
   (let [pages-controller {:index (fn [req] "index resp")
                           :show (fn [req] req)}
