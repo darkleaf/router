@@ -54,18 +54,16 @@
 
 (defn make-handler [item]
   (let [request-for (make-request-for item)
-        post-process (fn [req]
-                       (assoc req k/request-for request-for))]
+        pre-process (fn [req]
+                      (assoc req k/request-for request-for))]
     (fn
       ([req]
-       (if-let [[handler req] (process item req)]
-         (-> req
-             (post-process)
-             (handler))
-         not-found))
+       (let [req (pre-process req)]
+         (if-let [[handler req] (process item req)]
+           (handler req)
+           not-found)))
       ([req resp raise]
-       (if-let [[handler req] (process item req)]
-         (-> req
-             (post-process)
-             (handler resp raise))
-         (resp not-found))))))
+       (let [req (pre-process req)]
+         (if-let [[handler req] (process item req)]
+           (handler req resp raise)
+           (resp not-found)))))))
