@@ -445,8 +445,11 @@
 
 (deftest mount
   (let [forum-controller {:show (fn [req] "main")}
-        forum-topics-controller {:index (fn [req] "")
-                                 :show (fn [req] (-> req ::r/params :forum/topic))}
+        forum-topics-controller {:index (fn [req]
+                                          (let [request-for (::r/request-for req)]
+                                            (request-for :show [:forum/topic] {:forum/topic 10})))
+                                 :show (fn [req] (str "topic "
+                                                      (-> req ::r/params :forum/topic)))}
         forum (r/composite
                (r/resource :forum/main forum-controller
                            :segment false)
@@ -463,4 +466,4 @@
                     "")
     (routes-testing :show [:site :forum/topic] {:site "1", :forum/topic "2"}
                     {:uri "/sites/1/forum/topics/2", :request-method :get}
-                    "2")))
+                    "topic 2")))

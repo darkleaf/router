@@ -7,6 +7,11 @@
   (process [_ req]
     (when (= segment (-> req k/segments peek))
       (as-> req r
+        (update r k/request-for (fn [request-for]
+                                  (fn [action scope params]
+                                    (request-for action
+                                                 (into (k/scope req) scope)
+                                                 (merge (k/params req) params)))))
         (update r k/segments pop)
         (update r k/scope empty)
         (p/process item r))))
