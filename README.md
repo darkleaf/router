@@ -180,6 +180,23 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
          (r/resources :pages :page pages-controller))
 ```
 
+## Mount
+
+Позволяет примонтировать изолированное приложение.
+Внутренний request-for работает относительно точки монтирования.
+Смотри подробные примеры в тестах.
+
+```clojure
+(def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
+
+;; show [:admin :/dashboard/main] {} -> /admin/dashboard
+(r/section :admin
+          (r/mount dashboard-app :segment "dashboard"))
+
+(r/section :admin
+          (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
+```
+
 ## Helpers
 
 ``` clojure
