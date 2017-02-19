@@ -4,7 +4,8 @@
 (deftype NilItem []
   p/Item
   (process [_ _] nil)
-  (fill [_ _] nil))
+  (fill [_ _] nil)
+  (explain [_ _] []))
 
 (defn nil-item []
   (NilItem.))

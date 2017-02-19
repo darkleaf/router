@@ -19,7 +19,11 @@
   (fill [_ req]
     (as-> req r
       (update r k/segments conj segment)
-      (p/fill item r))))
+      (p/fill item r)))
+  (explain [_ init]
+    (as-> init i
+      (update-in i [:req :uri] str "/" segment)
+      (p/explain item i))))
 
 (defn mount [item & {:keys [segment middleware]
                      :or {middleware identity}}]

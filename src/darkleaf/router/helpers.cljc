@@ -67,3 +67,12 @@
          (if-let [[handler req] (process item req)]
            (handler req resp raise)
            (resp not-found)))))))
+
+(defn explain [item]
+  (let [init {:action nil
+              :scope []
+              :params-keys #{}
+              :req {:uri ""
+                    :request-method nil}}
+        explanations (p/explain item init)]
+    explanations))

@@ -1,7 +1,13 @@
 (ns darkleaf.router.action
-  (:require [clojure.set :as s]
+  (:require [clojure.string :refer [join]]
             [darkleaf.router.keywords :as k]
             [darkleaf.router.protocols :as p]))
+
+;; todo: double from helpers ns
+(defn- segments->uri [segments]
+  (->> segments
+       (map #(str "/" %))
+       (join)))
 
 (deftype Action [id request-method segments handler]
   p/Item
@@ -17,7 +23,12 @@
                (empty? (k/scope req)))
       (-> req
           (assoc :request-method request-method)
-          (update k/segments into segments)))))
+          (update k/segments into segments))))
+  (explain [_ init]
+    [(-> init
+         (assoc :action id)
+         (assoc-in [:req :request-method] request-method)
+         (update-in [:req :uri] str (segments->uri segments)))]))
 
 (defn build [id request-method segments handler]
   (Action. id request-method segments handler))
