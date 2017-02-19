@@ -189,7 +189,7 @@ Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
 
-;; show [:admin :/dashboard/main] {} -> /admin/dashboard
+;; show [:admin :dashboard/main] {} -> /admin/dashboard
 (r/section :admin
           (r/mount dashboard-app :segment "dashboard"))
 
