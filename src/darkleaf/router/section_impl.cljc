@@ -17,7 +17,12 @@
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
-          (p/some-fill children)))))
+          (p/some-fill children))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (update-in [:req :uri] str "/" segment)
+        (p/explain-all children))))
 
 (defn section [& args]
   (let [[id

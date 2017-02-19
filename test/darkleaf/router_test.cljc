@@ -1,6 +1,14 @@
 (ns darkleaf.router-test
   (:require [clojure.test :refer [deftest testing is are]]
-            [darkleaf.router :as r]))
+            [darkleaf.router :as r]
+            [darkleaf.router.url :as url]
+            #?(:clj [uritemplate-clj.core :as templ])
+            #?(:clj [clojure.walk :as walk])))
+
+#?(:clj
+   (defn- transform-kv [m t-key t-val]
+     (let [f (fn [[k v]] [(t-key k) (t-val v)])]
+       (walk/postwalk (fn [x] (if (map? x) (into {} (map f x)) x)) m))))
 
 (defn- make-middleware [name]
   (fn [handler]
@@ -16,7 +24,26 @@
         (is (= response (handler request)))))
     (testing "reverse matching"
       (let [request-for (r/make-request-for routes)]
-        (is (= request (request-for action-id scope params)))))))
+        (is (= request (request-for action-id scope params)))))
+    #?(:clj
+       (testing "explanation"
+         (let [explanations (r/explain routes)
+               explanation (first (filter (fn [i]
+                                            (and (= action-id (:action i))
+                                                 (= scope (:scope i))))
+                                          explanations))
+               _ (is (some? explanation))
+               params (transform-kv params
+                                    url/encode
+                                    identity)
+               req (transform-kv (:req explanation)
+                                 identity
+                                 (fn [val]
+                                   (if (string? val)
+                                     (templ/uritemplate val params)
+                                     val)))
+               handler (r/make-handler routes)]
+           (is (= response (handler req))))))))
 
 (deftest resources
   (testing "ordinal"

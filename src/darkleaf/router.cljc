@@ -6,7 +6,8 @@
             [darkleaf.router.resource-impl :as resource-impl]
             [darkleaf.router.resources-impl :as resources-impl]
             [darkleaf.router.mount-impl :as mount-impl]
-            [darkleaf.router.helpers :as helpers]))
+            [darkleaf.router.helpers :as helpers]
+            [darkleaf.router.protocols :as p]))
 
 (def composite composite-impl/composite)
 (def wrapper wrapper-impl/wrapper)
@@ -18,3 +19,4 @@
 
 (def make-request-for helpers/make-request-for)
 (def make-handler helpers/make-handler)
+(def explain helpers/explain)

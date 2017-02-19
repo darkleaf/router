@@ -16,7 +16,11 @@
     (when (= id (peek (k/scope req)))
       (-> req
           (update k/scope pop)
-          (p/some-fill children)))))
+          (p/some-fill children))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (p/explain-all children))))
 
 (deftype Scope [id segment children]
   p/Item
@@ -31,7 +35,12 @@
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
-          (p/some-fill children)))))
+          (p/some-fill children))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (update-in [:req :uri] str "/" segment)
+        (p/explain-all children))))
 
 (defn- resource-scope [id segment & children]
   (let [children (remove nil? children)]

@@ -4,7 +4,8 @@
             [darkleaf.router.wrapper-impl :refer [wrapper]]
             [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
-            [darkleaf.router.args :as args]))
+            [darkleaf.router.args :as args]
+            [darkleaf.router.url :as url]))
 
 (deftype CollectionWithoutSegment [id children]
   p/Item
@@ -16,7 +17,11 @@
     (when (= id (peek (k/scope req)))
       (-> req
           (update k/scope pop)
-          (p/some-fill children)))))
+          (p/some-fill children))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (p/explain-all children))))
 
 (deftype Collection [id segment children]
   p/Item
@@ -31,7 +36,12 @@
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
-          (p/some-fill children)))))
+          (p/some-fill children))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (update-in [:req :uri] str "/" segment)
+        (p/explain-all children))))
 
 (defn- collection-scope [id segment & children]
   (let [children (remove nil? children)]
@@ -63,7 +73,13 @@
         (-> req
             (update k/segments conj key-segment)
             (update k/scope pop)
-            (p/some-fill children))))))
+            (p/some-fill children)))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (update :params-keys conj id)
+        (update-in [:req :uri] str "{/" (url/encode id) "}")
+        (p/explain-all children))))
 
 (deftype Member [id segment children]
   p/Item
@@ -80,7 +96,13 @@
         (-> req
             (update k/segments conj segment key-segment)
             (update k/scope pop)
-            (p/some-fill children))))))
+            (p/some-fill children)))))
+  (explain [_ init]
+    (-> init
+        (update :scope conj id)
+        (update :params-keys conj id)
+        (update-in [:req :uri] str "/" segment "{/" (url/encode id) "}")
+        (p/explain-all children))))
 
 (defn- member-scope [singular-name segment & children]
   (let [children (remove nil? children)]

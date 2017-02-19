@@ -216,6 +216,35 @@ Handler adds keys for request map:
 * :darkleaf.router/params
 * :darkleaf.router/request-for for preventing circular dependency
 
+## Explain
+
+```clojure
+(def people-controller {:index (fn [req] (response "index"))
+                        :show (fn [req] (response "show"))})
+(def routes (r/resources :people :person people-controller))
+(pprint (r/explain routes))
+```
+
+```clojure
+[{:action :index,
+  :scope [:people],
+  :params-keys #{},
+  :req {:uri "/people", :request-method :get}}
+ {:action :show,
+  :scope [:person],
+  :params-keys #{:person},
+  :req {:uri "/people{/%3Aperson}", :request-method :get}}]
+```
+
+Удобно использовать для:
+ + наглядного отображения структуры роутинга
+ + поиска ошибок
+ + кроссплатформенной сериализации роутинга
+ + построения документации
+
+Для шаблонизации используется [URI Template](https://tools.ietf.org/html/rfc6570).
+Параметры шаблона однозначно формируются из params-keys путем применения url-encode.
+
 ## Questions
 
 You can create github issue with your question.
