@@ -10,7 +10,7 @@ Routing can be described in cljc files for code sharing.
 
 ## Usage
 
-Please see [tests](test/darkleaf/router_test.clj) for exhaustive examples.
+Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
 ## Concept
 
@@ -251,9 +251,12 @@ You can create github issue with your question.
 
 ## TODO
 
-* wildcard, not-found
-* docs, pre, assert
-* clojure.spec
+* refactoring
+* wildcard?
+* domains support?
+* pass (not-found)
+* docs
+* pre, assert
 
 ## License
 
