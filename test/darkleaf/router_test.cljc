@@ -444,26 +444,51 @@
       (is (= {:page "1"} (::r/params returned-req))))))
 
 (deftest mount
-  (let [forum-controller {:show (fn [req] "main")}
-        forum-topics-controller {:index (fn [req]
-                                          (let [request-for (::r/request-for req)]
-                                            (request-for :show [:forum/topic] {:forum/topic 10})))
-                                 :show (fn [req] (str "topic "
-                                                      (-> req ::r/params :forum/topic)))}
-        forum (r/composite
-               (r/resource :forum/main forum-controller
-                           :segment false)
-               (r/resources :forum/topics :forum/topic forum-topics-controller))
-        sites-controller {}
-        routes (r/resources :sites :site sites-controller
-                            (r/mount forum :segment "forum"))
-        routes-testing (partial route-testing routes)]
-    (routes-testing :show [:site :forum/main] {:site "1"}
-                    {:uri "/sites/1/forum", :request-method :get}
-                    "main")
-    (routes-testing :index [:site :forum/topics] {:site "1"}
-                    {:uri "/sites/1/forum/topics", :request-method :get}
-                    "")
-    (routes-testing :show [:site :forum/topic] {:site "1", :forum/topic "2"}
-                    {:uri "/sites/1/forum/topics/2", :request-method :get}
-                    "topic 2")))
+  (testing "ordinal"
+    (let [dashboard-controller {:show (fn [req]
+                                        (let [request-for (::r/request-for req)]
+                                          (str "dashboard: "
+                                               (:uri (request-for :show [:dashboard/main] {})))))}
+          dashboard (r/resource :dashboard/main dashboard-controller
+                                :segment false)
+          routes (r/composite
+                  (r/section :admin
+                             (r/mount dashboard :segment "dashboard"))
+                  (r/guard :locale #{"en" "ru"}
+                           (r/mount dashboard :segment "dashboard")))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :show [:admin :dashboard/main] {}
+                      {:uri "/admin/dashboard", :request-method :get}
+                      "dashboard: /admin/dashboard")
+      (routes-testing :show [:locale :dashboard/main] {:locale "en"}
+                      {:uri "/en/dashboard", :request-method :get}
+                      "dashboard: /en/dashboard")))
+  (testing "middleware"
+    (let [forum-topics-controller {:show (fn [req] (str "topic "
+                                                        (-> req ::r/params :forum/topic)
+                                                        " inside "
+                                                        (-> req :forum/scope)))}
+          forum (r/resources :forum/topics :forum/topic forum-topics-controller)
+
+          sites-controller {}
+          site-forum-adapter (fn [handler]
+                               (fn [req]
+                                 (-> req
+                                     (assoc :forum/scope (str "site " (-> req ::r/params :site)))
+                                     (handler))))
+          community-forum-adapter (fn [handler]
+                                    (fn [req]
+                                      (-> req
+                                          (assoc :forum/scope "community")
+                                          (handler))))
+          routes (r/composite
+                  (r/mount forum :segment "community", :middleware community-forum-adapter)
+                  (r/resources :sites :site sites-controller
+                               (r/mount forum :segment "forum", :middleware site-forum-adapter)))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :show [:forum/topic] {:forum/topic "1"}
+                      {:uri "/community/topics/1", :request-method :get}
+                      "topic 1 inside community")
+      (routes-testing :show [:site :forum/topic] {:site "1", :forum/topic "2"}
+                      {:uri "/sites/1/forum/topics/2", :request-method :get}
+                      "topic 2 inside site 1"))))

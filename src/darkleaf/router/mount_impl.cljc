@@ -1,6 +1,7 @@
 (ns darkleaf.router.mount-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]))
+            [darkleaf.router.protocols :as p]
+            [darkleaf.router.wrapper-impl :refer [wrapper]]))
 
 (deftype App [item segment]
   p/Item
@@ -22,4 +23,5 @@
 
 (defn mount [item & {:keys [segment middleware]
                      :or {middleware identity}}]
-  (App. item segment))
+  (wrapper middleware
+           (App. item segment)))
