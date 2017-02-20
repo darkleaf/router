@@ -1,46 +1,46 @@
 (ns darkleaf.router.resource-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]
+            [darkleaf.router.item :as i]
             [darkleaf.router.wrapper-impl :refer [wrapper]]
             [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
             [darkleaf.router.args :as args]))
 
 (deftype ScopeWithoutSegment [id children]
-  p/Item
+  i/Item
   (process [_ req]
     (-> req
         (update k/scope conj id)
-        (p/some-process children)))
+        (i/some-process children)))
   (fill [_ req]
     (when (= id (-> req k/scope peek))
       (-> req
           (update k/scope pop)
-          (p/some-fill children))))
+          (i/some-fill children))))
   (explain [_ init]
     (-> init
         (update :scope conj id)
-        (p/explain-all children))))
+        (i/explain-all children))))
 
 (deftype Scope [id segment children]
-  p/Item
+  i/Item
   (process [_ req]
     (when (= segment (-> req k/segments peek))
       (-> req
           (update k/segments pop)
           (update k/scope conj id)
-          (p/some-process children))))
+          (i/some-process children))))
   (fill [_ req]
     (when (= id (-> req k/scope peek))
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
-          (p/some-fill children))))
+          (i/some-fill children))))
   (explain [_ init]
     (-> init
         (update :scope conj id)
         (update-in [:req :uri] str "/" segment)
-        (p/explain-all children))))
+        (i/explain-all children))))
 
 (defn- resource-scope [id segment & children]
   (let [children (remove nil? children)]

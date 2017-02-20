@@ -1,6 +1,6 @@
 (ns darkleaf.router.resources-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]
+            [darkleaf.router.item :as i]
             [darkleaf.router.wrapper-impl :refer [wrapper]]
             [darkleaf.router.action :as action]
             [darkleaf.router.nil-item-impl :refer [nil-item]]
@@ -8,40 +8,40 @@
             [darkleaf.router.url :as url]))
 
 (deftype CollectionWithoutSegment [id children]
-  p/Item
+  i/Item
   (process [_ req]
     (-> req
         (update k/scope conj id)
-        (p/some-process children)))
+        (i/some-process children)))
   (fill [_ req]
     (when (= id (-> req k/scope peek))
       (-> req
           (update k/scope pop)
-          (p/some-fill children))))
+          (i/some-fill children))))
   (explain [_ init]
     (-> init
         (update :scope conj id)
-        (p/explain-all children))))
+        (i/explain-all children))))
 
 (deftype Collection [id segment children]
-  p/Item
+  i/Item
   (process [_ req]
     (when (= segment (-> req k/segments peek))
       (-> req
           (update k/segments pop)
           (update k/scope conj id)
-          (p/some-process children))))
+          (i/some-process children))))
   (fill [_ req]
     (when (= id (peek (k/scope req)))
       (-> req
           (update k/scope pop)
           (update k/segments conj segment)
-          (p/some-fill children))))
+          (i/some-fill children))))
   (explain [_ init]
     (-> init
         (update :scope conj id)
         (update-in [:req :uri] str "/" segment)
-        (p/explain-all children))))
+        (i/explain-all children))))
 
 (defn- collection-scope [id segment & children]
   (let [children (remove nil? children)]
@@ -61,35 +61,35 @@
         (assoc-in [k/params key] key-segment))))
 
 (deftype MemberWithoutSegment [id children]
-  p/Item
+  i/Item
   (process [_ req]
     (some-> req
             (handle-key id)
             (update k/scope conj id)
-            (p/some-process children)))
+            (i/some-process children)))
   (fill [_ req]
     (let [key-segment (get-in req [k/params id])]
       (when (some? key-segment)
         (-> req
             (update k/segments conj key-segment)
             (update k/scope pop)
-            (p/some-fill children)))))
+            (i/some-fill children)))))
   (explain [_ init]
     (let [encoded-id (url/encode id)]
       (-> init
           (update :scope conj id)
           (assoc-in [:params-kmap id] encoded-id)
           (update-in [:req :uri] str "{/" encoded-id "}")
-          (p/explain-all children)))))
+          (i/explain-all children)))))
 
 (deftype Member [id segment children]
-  p/Item
+  i/Item
   (process [_ req]
     (some-> req
             (handle-segment segment)
             (handle-key id)
             (update k/scope conj id)
-            (p/some-process children)))
+            (i/some-process children)))
   (fill [_ req]
     (let [key-segment (get-in req [k/params id])]
       (when (and (= id (-> req k/scope peek))
@@ -97,14 +97,14 @@
         (-> req
             (update k/segments conj segment key-segment)
             (update k/scope pop)
-            (p/some-fill children)))))
+            (i/some-fill children)))))
   (explain [_ init]
     (let [encoded-id (url/encode id)]
       (-> init
           (update :scope conj id)
           (assoc-in [:params-kmap id] encoded-id)
           (update-in [:req :uri] str "/" segment "{/" encoded-id "}")
-          (p/explain-all children)))))
+          (i/explain-all children)))))
 
 (defn- member-scope [singular-name segment & children]
   (let [children (remove nil? children)]
