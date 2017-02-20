@@ -228,11 +228,11 @@ Handler adds keys for request map:
 ```clojure
 [{:action :index,
   :scope [:people],
-  :params-keys #{},
+  :params-kmap {},
   :req {:uri "/people", :request-method :get}}
  {:action :show,
   :scope [:person],
-  :params-keys #{:person},
+  :params-kmap {:person "%3Aperson"},
   :req {:uri "/people{/%3Aperson}", :request-method :get}}]
 ```
 
@@ -243,7 +243,9 @@ Handler adds keys for request map:
  + построения документации
 
 Для шаблонизации используется [URI Template](https://tools.ietf.org/html/rfc6570).
-Параметры шаблона однозначно формируются из params-keys путем применения url-encode.
+Т.к. clojure keywords содержат запрещенные символы,
+поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
+Соответствие параметров шаблона и :params задается через :params-kmap.
 
 ## Questions
 

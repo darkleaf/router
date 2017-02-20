@@ -1,8 +1,8 @@
 (ns darkleaf.router.nil-item-impl
-  (:require [darkleaf.router.protocols :as p]))
+  (:require [darkleaf.router.item :as i]))
 
 (deftype NilItem []
-  p/Item
+  i/Item
   (process [_ _] nil)
   (fill [_ _] nil)
   (explain [_ _] []))

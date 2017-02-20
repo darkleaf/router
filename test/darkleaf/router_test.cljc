@@ -1,7 +1,7 @@
 (ns darkleaf.router-test
   (:require [clojure.test :refer [deftest testing is are]]
+            [clojure.set :as set]
             [darkleaf.router :as r]
-            [darkleaf.router.url :as url]
             #?(:clj [uritemplate-clj.core :as templ])
             #?(:clj [clojure.walk :as walk])))
 
@@ -33,17 +33,15 @@
                                                  (= scope (:scope i))))
                                           explanations))
                _ (is (some? explanation))
-               params (transform-kv params
-                                    url/encode
-                                    identity)
-               req (transform-kv (:req explanation)
-                                 identity
-                                 (fn [val]
-                                   (if (string? val)
-                                     (templ/uritemplate val params)
-                                     val)))
-               handler (r/make-handler routes)]
-           (is (= response (handler req))))))))
+               params (set/rename-keys params (:params-kmap explanation))
+               request-template (:req explanation)
+               calculated-request (transform-kv request-template
+                                                identity
+                                                (fn [val]
+                                                  (if (string? val)
+                                                    (templ/uritemplate val params)
+                                                    val)))]
+           (is (= request calculated-request)))))))
 
 (deftest resources
   (testing "ordinal"

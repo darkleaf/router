@@ -1,7 +1,7 @@
 (ns darkleaf.router.helpers
   (:require [clojure.string :refer [split join]]
             [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]))
+            [darkleaf.router.item :as i]))
 
 (def ^:private empty-segments #?(:clj clojure.lang.PersistentQueue/EMPTY
                                  :cljs cljs.core/PersistentQueue.EMPTY))
@@ -25,7 +25,7 @@
                        k/scope scope
                        k/params params
                        k/segments empty-segments}]
-      (when-let [req (p/fill item initial-req)]
+      (when-let [req (i/fill item initial-req)]
         (assert (-> req k/scope empty?))
         (as-> req r
           (assoc r :uri (segments->uri (k/segments r)))
@@ -37,7 +37,7 @@
                    k/params {}
                    k/segments (uri->segments (:uri req))
                    k/middlewares empty-middlewares)]
-    (when-let [[handler req] (p/process item req)]
+    (when-let [[handler req] (i/process item req)]
       (assert (-> req k/segments empty?))
       (assert (-> req k/action keyword?))
       (let [middleware (apply comp (k/middlewares req))
@@ -71,8 +71,7 @@
 (defn explain [item]
   (let [init {:action nil
               :scope []
-              :params-keys #{}
-              :req {:uri ""
-                    :request-method nil}}
-        explanations (p/explain item init)]
+              :params-kmap {}
+              :req {:uri ""}}
+        explanations (i/explain item init)]
     explanations))

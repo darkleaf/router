@@ -1,14 +1,14 @@
 (ns darkleaf.router.composite-impl
-  (:require [darkleaf.router.protocols :as p]))
+  (:require [darkleaf.router.item :as i]))
 
 (defrecord Composite [children]
-  p/Item
+  i/Item
   (process [_ req]
-    (p/some-process req children))
+    (i/some-process req children))
   (fill [_ req]
-    (p/some-fill req children))
+    (i/some-fill req children))
   (explain [_ init]
-    (p/explain-all init children)))
+    (i/explain-all init children)))
 
 (defn composite [& children]
   (Composite. children))

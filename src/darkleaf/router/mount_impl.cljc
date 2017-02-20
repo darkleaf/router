@@ -1,10 +1,10 @@
 (ns darkleaf.router.mount-impl
   (:require [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]
+            [darkleaf.router.item :as i]
             [darkleaf.router.wrapper-impl :refer [wrapper]]))
 
 (deftype App [item segment]
-  p/Item
+  i/Item
   (process [_ req]
     (when (= segment (-> req k/segments peek))
       (as-> req r
@@ -15,15 +15,15 @@
                                                  (merge (k/params req) params)))))
         (update r k/segments pop)
         (update r k/scope empty)
-        (p/process item r))))
+        (i/process item r))))
   (fill [_ req]
     (as-> req r
       (update r k/segments conj segment)
-      (p/fill item r)))
+      (i/fill item r)))
   (explain [_ init]
     (as-> init i
       (update-in i [:req :uri] str "/" segment)
-      (p/explain item i))))
+      (i/explain item i))))
 
 (defn mount [item & {:keys [segment middleware]
                      :or {middleware identity}}]

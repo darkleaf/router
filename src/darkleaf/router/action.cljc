@@ -1,7 +1,7 @@
 (ns darkleaf.router.action
   (:require [clojure.string :refer [join]]
             [darkleaf.router.keywords :as k]
-            [darkleaf.router.protocols :as p]))
+            [darkleaf.router.item :as i]))
 
 ;; todo: double from helpers ns
 (defn- segments->uri [segments]
@@ -10,7 +10,7 @@
        (join)))
 
 (deftype Action [id request-method segments handler]
-  p/Item
+  i/Item
   (process [_ req]
     (when (and (= request-method (:request-method req))
                (= segments (k/segments req)))
