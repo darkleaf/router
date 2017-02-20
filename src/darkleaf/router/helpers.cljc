@@ -71,8 +71,7 @@
 (defn explain [item]
   (let [init {:action nil
               :scope []
-              :params-keys #{}
-              :req {:uri ""
-                    :request-method nil}}
+              :params-kmap {}
+              :req {:uri ""}}
         explanations (p/explain item init)]
     explanations))

@@ -14,7 +14,7 @@
         (update k/scope conj id)
         (p/some-process children)))
   (fill [_ req]
-    (when (= id (peek (k/scope req)))
+    (when (= id (-> req k/scope peek))
       (-> req
           (update k/scope pop)
           (p/some-fill children))))
@@ -75,11 +75,12 @@
             (update k/scope pop)
             (p/some-fill children)))))
   (explain [_ init]
-    (-> init
-        (update :scope conj id)
-        (update :params-keys conj id)
-        (update-in [:req :uri] str "{/" (url/encode id) "}")
-        (p/explain-all children))))
+    (let [encoded-id (url/encode id)]
+      (-> init
+          (update :scope conj id)
+          (assoc-in [:params-kmap id] encoded-id)
+          (update-in [:req :uri] str "{/" encoded-id "}")
+          (p/explain-all children)))))
 
 (deftype Member [id segment children]
   p/Item
@@ -98,11 +99,12 @@
             (update k/scope pop)
             (p/some-fill children)))))
   (explain [_ init]
-    (-> init
-        (update :scope conj id)
-        (update :params-keys conj id)
-        (update-in [:req :uri] str "/" segment "{/" (url/encode id) "}")
-        (p/explain-all children))))
+    (let [encoded-id (url/encode id)]
+      (-> init
+          (update :scope conj id)
+          (assoc-in [:params-kmap id] encoded-id)
+          (update-in [:req :uri] str "/" segment "{/" encoded-id "}")
+          (p/explain-all children)))))
 
 (defn- member-scope [singular-name segment & children]
   (let [children (remove nil? children)]

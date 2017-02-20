@@ -1,16 +1,16 @@
 (ns darkleaf.router.section-impl
   (:require [darkleaf.router.protocols :as p]
             [darkleaf.router.keywords :as k]
-            [darkleaf.router.args :as args]))
+            [darkleaf.router.args :as args]
+            [darkleaf.router.wrapper-impl :refer [wrapper]]))
 
-(deftype Section [id segment middleware children]
+(deftype Section [id segment children]
   p/Item
   (process [_ req]
     (when (= segment (-> req k/segments peek))
       (-> req
           (update k/segments pop)
           (update k/scope conj id)
-          (update k/middlewares conj middleware)
           (p/some-process children))))
   (fill [_ req]
     (when (= id (-> req k/scope peek))
@@ -31,4 +31,5 @@
                segment (name id)}}
          children]
         (args/parse 1 args)]
-    (Section. id segment middleware children)))
+    (wrapper middleware
+             (Section. id segment children))))

@@ -24,11 +24,12 @@
             (update k/segments conj segment)
             (p/some-fill children)))))
   (explain [_ init]
-    (-> init
-        (update :scope conj id)
-        (update :params-keys conj id)
-        (update-in [:req :uri] str "{/" (url/encode id) "}")
-        (p/explain-all children))))
+    (let [encoded-id (url/encode id)]
+      (-> init
+          (update :scope conj id)
+          (assoc-in [:params-kmap id] encoded-id)
+          (update-in [:req :uri] str "{/" encoded-id "}")
+          (p/explain-all children)))))
 
 (defn guard [& args]
   (let [[id predicate
