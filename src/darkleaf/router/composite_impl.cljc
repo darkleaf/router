@@ -10,5 +10,5 @@
   (explain [_ init]
     (i/explain-all init children)))
 
-(defn composite [& children]
+(defn ^{:style/indent :defn} composite [& children]
   (Composite. children))

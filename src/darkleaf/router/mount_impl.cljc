@@ -1,31 +1,25 @@
 (ns darkleaf.router.mount-impl
   (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.item :as i]
-            [darkleaf.router.wrapper-impl :refer [wrapper]]))
+            [darkleaf.router.item-wrappers :as wrappers]))
 
-(deftype App [item segment]
+(deftype App [item]
   i/Item
   (process [_ req]
-    (when (= segment (-> req k/segments peek))
-      (as-> req r
-        (update r k/request-for (fn [request-for]
-                                  (fn [action scope params]
-                                    (request-for action
-                                                 (into (k/scope req) scope)
-                                                 (merge (k/params req) params)))))
-        (update r k/segments pop)
-        (update r k/scope empty)
-        (i/process item r))))
+    (as-> req <>
+      (update <> k/request-for (fn [request-for]
+                                (fn [action scope params]
+                                  (request-for action
+                                               (into (k/scope req) scope)
+                                               (merge (k/params req) params)))))
+      (update <> k/scope empty)
+      (i/process item <>)))
   (fill [_ req]
-    (as-> req r
-      (update r k/segments conj segment)
-      (i/fill item r)))
+    (i/fill item req))
   (explain [_ init]
-    (as-> init i
-      (update-in i [:req :uri] str "/" segment)
-      (i/explain item i))))
+    (i/explain item init)))
 
-(defn mount [item & {:keys [segment middleware]
-                     :or {middleware identity}}]
-  (wrapper middleware
-           (App. item segment)))
+(defn mount [item & {:keys [segment middleware]}]
+  (cond-> (App. item)
+    middleware (wrappers/wrap-middleware middleware)
+    segment (wrappers/wrap-segment segment)))

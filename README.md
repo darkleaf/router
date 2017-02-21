@@ -193,8 +193,35 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/section :admin
           (r/mount dashboard-app :segment "dashboard"))
 
+;; show [:admin :dashboard/main] {} -> /admin
+(r/section :admin
+          (r/mount dashboard-app :segment false))
+
 (r/section :admin
           (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
+```
+
+## Pass
+
+Передает запрос в ring совместимый обработчик.
+Проверяет только начало uri и может использоваться как дефолтный обработчик области.
+
+```clojure
+(defn handler (fn [req] (response "dashboard")))
+
+;; :get [:admin :dashboard] {} -> /admin/dashboard
+;; :post [:admin :dashboard] {:segments ["private" "users"]} -> POST /admin/dashboard/private/users
+(r/section :admin
+           (r/pass :dashboard handler))
+
+;; :get [:admin :dashboard] {} -> /admin/monitoring
+;; :post [:admin :dashboard] {:segments ["private" "users"]} -> POST /admin/monitoring/private/users
+(r/section :admin
+           (r/pass :dashboard handler :segment "monitoring"))
+
+;; :get [:not-found] {} -> /
+;; :post [:not-found] {:segments ["foo" "bar"]} -> POST /foo/bar
+(r/pass :not-found handler :segment false)
 ```
 
 ## Helpers

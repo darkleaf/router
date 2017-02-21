@@ -30,5 +30,9 @@
          (assoc-in [:req :request-method] request-method)
          (update-in [:req :uri] str (segments->uri segments)))]))
 
+(defn action [id request-method segments handler]
+  (Action. id request-method segments handler))
+
+;;todo: remove
 (defn build [id request-method segments handler]
   (Action. id request-method segments handler))

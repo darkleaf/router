@@ -13,5 +13,5 @@
   (explain [_ init]
     (i/explain-all init children)))
 
-(defn wrapper [middleware & children]
+(defn ^{:style/indent :defn} wrapper [middleware & children]
   (Wrapper. middleware children))
