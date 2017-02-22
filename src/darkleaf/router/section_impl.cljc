@@ -5,8 +5,7 @@
 (defn ^{:style/indent :defn} section [& args]
   (let [[id
          {:keys [middleware segment]
-          :or {middleware identity
-               segment (name id)}}
+          :or {segment (name id)}}
          children]
         (args/parse 1 args)]
     (cond-> (wrappers/composite children)
