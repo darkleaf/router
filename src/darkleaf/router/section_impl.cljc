@@ -1,8 +1,6 @@
 (ns darkleaf.router.section-impl
   (:require [darkleaf.router.args :as args]
-            [darkleaf.router.wrapper-impl :refer [wrapper]]
-            [darkleaf.router.scope-impl :as scope-impl]
-            [darkleaf.router.segment-impl :as segment-impl]))
+            [darkleaf.router.item-wrappers :as wrappers]))
 
 (defn ^{:style/indent :defn} section [& args]
   (let [[id
@@ -11,6 +9,7 @@
                segment (name id)}}
          children]
         (args/parse 1 args)]
-    (segment-impl/segment segment
-      (scope-impl/scope id
-        (apply wrapper middleware children)))))
+    (cond-> (wrappers/composite children)
+      middleware (wrappers/wrap-middleware middleware)
+      segment (wrappers/wrap-segment segment)
+      :always (wrappers/wrap-scope id))))

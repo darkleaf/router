@@ -8,7 +8,7 @@
            xs xs]
       (if (keyword? (first xs))
         (do
-          (assert (some? (second xs)))
+          (assert (>= (count xs) 2))
           (recur (assoc opts (first xs) (second xs))
                  (drop 2 xs)))
         (-> ordinal-args

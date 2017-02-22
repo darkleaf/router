@@ -32,7 +32,3 @@
 
 (defn action [id request-method segments handler]
   (Action. id request-method segments handler))
-
-;;todo: remove
-(defn build [id request-method segments handler]
-  (Action. id request-method segments handler))
