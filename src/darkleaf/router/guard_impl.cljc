@@ -2,39 +2,37 @@
   (:require [darkleaf.router.item :as i]
             [darkleaf.router.keywords :as k]
             [darkleaf.router.args :as args]
-            [darkleaf.router.url :as url]))
+            [darkleaf.router.url :as url]
+            [darkleaf.router.item-wrappers :as wrappers]))
 
-(deftype Guard [id predicate middleware children]
+(deftype Guard [item id predicate]
   i/Item
   (process [_ req]
     (let [segment (-> req k/segments peek)]
       (when (predicate segment)
-        (-> req
-            (update k/segments pop)
-            (update k/params assoc id segment)
-            (update k/scope conj id)
-            (update k/middlewares conj middleware)
-            (i/some-process children)))))
+        (as-> req <>
+          (update <> k/segments pop)
+          (update <> k/params assoc id segment)
+          (i/process item <>)))))
   (fill [_ req]
     (let [segment (-> req k/params id)]
-      (when (and (= id (-> req k/scope peek))
-                 (predicate segment))
-        (-> req
-            (update k/scope pop)
-            (update k/segments conj segment)
-            (i/some-fill children)))))
+      (when (predicate segment)
+        (as-> req <>
+          (update <> k/segments conj segment)
+          (i/fill item <>)))))
   (explain [_ init]
     (let [encoded-id (url/encode id)]
-      (-> init
-          (update :scope conj id)
-          (assoc-in [:params-kmap id] encoded-id)
-          (update-in [:req :uri] str "{/" encoded-id "}")
-          (i/explain-all children)))))
+      (as-> init <>
+        (assoc-in <> [:params-kmap id] encoded-id)
+        (update-in <> [:req :uri] str "{/" encoded-id "}")
+        (i/explain item <>)))))
 
-(defn guard [& args]
+(defn ^{:style/indent :defn} guard [& args]
   (let [[id predicate
-         {:keys [middleware]
-          :or {middleware identity}}
+         {:keys [middleware]}
          children]
         (args/parse 2 args)]
-    (Guard. id predicate middleware children)))
+    (cond-> (wrappers/composite children)
+      middleware (wrappers/wrap-middleware middleware)
+      :always (Guard. id predicate)
+      :always (wrappers/wrap-scope id))))

@@ -60,7 +60,6 @@
                                                     (-> req ::r/params :page)))}
           pages (r/resources :pages :page pages-controller)
           pages-testing (partial route-testing pages)]
-
       (pages-testing :index [:pages] {}
                      {:uri "/pages", :request-method :get}
                      "index resp")
@@ -95,7 +94,7 @@
                              :put     (fn [req] "put resp")
                              :destroy (fn [req] "destroy resp")}
           people (r/resources :people :person people-controller
-                              :segment "menschen")
+                   :segment "menschen")
           people-testing (partial route-testing people)]
       (people-testing :index [:people] {}
                       {:uri "/menschen", :request-method :get}
@@ -135,8 +134,7 @@
                                                     (-> req ::r/params :page)))
                             :destroy (fn [req] (str "destroy "
                                                     (-> req ::r/params :page)))}
-          pages (r/resources :pages :page pages-controller
-                             :segment false)
+          pages (r/resources :pages :page pages-controller, :segment false)
           pages-testing (partial route-testing pages)]
       (pages-testing :index [:pages] {}
                      {:uri "", :request-method :get}
@@ -170,8 +168,8 @@
                                                 (-> req ::r/params :page)
                                                 " star show resp"))}
           routes (r/resources :pages :page pages-controller
-                              (r/resources :comments :comment comments-controller)
-                              (r/resource :star star-controller))
+                   (r/resources :comments :comment comments-controller)
+                   (r/resource :star star-controller))
           routes-testing (partial route-testing routes)]
       (routes-testing :show [:page :comment] {:page "some-page"
                                               :comment "some-comment"}
@@ -196,7 +194,7 @@
           star-controller {:middleware (make-middleware "star")
                            :show (fn [req] "show star resp")}
           routes (r/resources :pages :page pages-controller
-                              (r/resource :star star-controller))
+                   (r/resource :star star-controller))
           handler (r/make-handler routes)]
 
       (are [req resp] (= resp (handler req))
@@ -267,8 +265,7 @@
                            :update  (fn [req] "update resp")
                            :put     (fn [req] "put resp")
                            :destroy (fn [req] "destroy resp")}
-          star (r/resource :star star-controller
-                           :segment "estrella")
+          star (r/resource :star star-controller :segment "estrella")
           star-testing (partial route-testing star)]
       (star-testing :new [:star] {}
                     {:uri "/estrella/new", :request-method :get}
@@ -299,8 +296,7 @@
                            :update  (fn [req] "update resp")
                            :put     (fn [req] "put resp")
                            :destroy (fn [req] "destroy resp")}
-          star (r/resource :star star-controller
-                           :segment false)
+          star (r/resource :star star-controller :segment false)
           star-testing (partial route-testing star)]
       (star-testing :new [:star] {}
                     {:uri "/new", :request-method :get}
@@ -327,7 +323,7 @@
     (let [star-controller {}
           comments-controller {:show (fn [req] "show resp")}
           routes (r/resource :star star-controller
-                             (r/resources :comments :comment comments-controller))
+                   (r/resources :comments :comment comments-controller))
           routes-testing (partial route-testing routes)]
       (routes-testing :show [:star :comment] {:comment "some-comment"}
                       {:uri "/star/comments/some-comment"
@@ -345,7 +341,7 @@
           comments-controllers {:middleware (make-middleware "comments")
                                 :index (fn [req] "comments index")}
           routes (r/resource :star star-controller
-                             (r/resources :comments :comment comments-controllers))
+                   (r/resources :comments :comment comments-controllers))
           handler (r/make-handler routes)]
       (are [req resp] (= resp (handler req))
         {:uri "/star", :request-method :get}
@@ -372,27 +368,35 @@
         {:uri "/star/comments", :request-method :get}
         "star // comments // comments index"))))
 
-(deftest composite
-  (let [posts-controller {:show (fn [req] "show post resp")}
-        news-controller {:show (fn [req] "show news resp")}
-        routes (r/composite
-                (r/resources :posts :post posts-controller)
-                (r/resources :news :news news-controller))
-        routes-testing (partial route-testing routes)]
-    (routes-testing :show [:post] {:post "some-post"}
-                    {:uri "/posts/some-post"
-                     :request-method :get}
-                    "show post resp")
-    (routes-testing :show [:news] {:news "some-news"}
-                    {:uri "/news/some-news"
-                     :request-method :get}
-                    "show news resp")))
+(deftest group
+  (testing "ordinal"
+    (let [posts-controller {:show (fn [req] "show post resp")}
+          news-controller {:show (fn [req] "show news resp")}
+          routes (r/group
+                   (r/resources :posts :post posts-controller)
+                   (r/resources :news :news news-controller))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :show [:post] {:post "some-post"}
+                      {:uri "/posts/some-post"
+                       :request-method :get}
+                      "show post resp")
+      (routes-testing :show [:news] {:news "some-news"}
+                      {:uri "/news/some-news"
+                       :request-method :get}
+                      "show news resp")))
+  (testing "middleware"
+    (let [pages-controller {:index (fn [req] "index resp")}
+          routes (r/group :middleware (make-middleware "wrapper")
+                   (r/resources :pages :page pages-controller))
+          handler (r/make-handler routes)
+          req {:uri "/pages", :request-method :get}]
+      (is (= "wrapper // index resp" (handler req))))))
 
 (deftest section
   (testing "ordinal"
     (let [pages-controller {:index (fn [req] "index resp")}
           admin (r/section :admin
-                           (r/resources :pages :page pages-controller))
+                  (r/resources :pages :page pages-controller))
           admin-testing (partial route-testing admin)]
       (admin-testing :index [:admin :pages] {}
                      {:uri "/admin/pages", :request-method :get}
@@ -400,35 +404,25 @@
   (testing "with segment"
     (let [pages-controller {:index (fn [req] "index resp")}
           admin (r/section :admin, :segment "private"
-                           (r/resources :pages :page pages-controller))
+                  (r/resources :pages :page pages-controller))
           admin-testing (partial route-testing admin)]
       (admin-testing :index [:admin :pages] {}
                      {:uri "/private/pages", :request-method :get}
                      "index resp")))
   (testing "middleware"
     (let [pages-controller {:index (fn [req] "index resp")}
-          routes (r/section :admin
-                            :middleware (make-middleware "admin")
-                            (r/resources :pages :page pages-controller))
+          routes (r/section :admin :middleware (make-middleware "admin")
+                   (r/resources :pages :page pages-controller))
           handler (r/make-handler routes)
           req {:uri "/admin/pages", :request-method :get}]
       (is (= "admin // index resp" (handler req))))))
-
-(deftest wrapper
-  (testing "middleware"
-    (let [pages-controller {:index (fn [req] "index resp")}
-          routes (r/wrapper (make-middleware "wrapper")
-                            (r/resources :pages :page pages-controller))
-          handler (r/make-handler routes)
-          req {:uri "/pages", :request-method :get}]
-      (is (= "wrapper // index resp" (handler req))))))
 
 (deftest guard
   (testing "ordinal"
     (let [pages-controller {:index (fn [req] (str (-> req ::r/params :locale)
                                                   " index resp"))}
           routes (r/guard :locale #{"ru" "en"}
-                          (r/resources :pages :page pages-controller))]
+                   (r/resources :pages :page pages-controller))]
       (testing "correct"
         (let [routes-testing (partial route-testing routes)]
           (routes-testing :index [:locale :pages] {:locale "ru"}
@@ -443,9 +437,8 @@
   (testing "middleware"
     (let [pages-controller {:index (fn [req] (str (-> req ::r/params :locale)
                                                   " index resp"))}
-          routes (r/guard :locale #{"ru" "en"}
-                          :middleware (make-middleware "guard")
-                          (r/resources :pages :page pages-controller))
+          routes (r/guard :locale #{"ru" "en"} :middleware (make-middleware "guard")
+                   (r/resources :pages :page pages-controller))
           handler (r/make-handler routes)]
       (is (= "guard // ru index resp"
              (-> {:uri "/ru/pages", :request-method :get}
@@ -469,18 +462,18 @@
       (is (= {:page "1"} (::r/params returned-req))))))
 
 (deftest mount
-  (testing "ordinal"
+  (testing "ordinal with segment"
     (let [dashboard-controller {:show (fn [req]
                                         (let [request-for (::r/request-for req)]
                                           (str "dashboard: "
                                                (:uri (request-for :show [:dashboard/main] {})))))}
           dashboard (r/resource :dashboard/main dashboard-controller
-                                :segment false)
-          routes (r/composite
-                  (r/section :admin
-                             (r/mount dashboard :segment "dashboard"))
-                  (r/guard :locale #{"en" "ru"}
-                           (r/mount dashboard :segment "dashboard")))
+                      :segment false)
+          routes (r/group
+                   (r/section :admin
+                     (r/mount dashboard :segment "dashboard"))
+                   (r/guard :locale #{"en" "ru"}
+                     (r/mount dashboard :segment "dashboard")))
           routes-testing (partial route-testing routes)]
       (routes-testing :show [:admin :dashboard/main] {}
                       {:uri "/admin/dashboard", :request-method :get}
@@ -488,6 +481,15 @@
       (routes-testing :show [:locale :dashboard/main] {:locale "en"}
                       {:uri "/en/dashboard", :request-method :get}
                       "dashboard: /en/dashboard")))
+  (testing "without segment"
+    (let [dashboard-controller {:show (fn [req] "dashboard")}
+          dashboard (r/resource :dashboard/main dashboard-controller :segment false)]
+      (for [routes [(r/mount dashboard)
+                    (r/mount dashboard :segment false)]
+            :let [routes-testing (partial route-testing routes)]]
+        (routes-testing :show [:dashboard/main] {}
+                        {:uri "", :request-method :get}
+                        "dashboard"))))
   (testing "middleware"
     (let [forum-topics-controller {:show (fn [req] (str "topic "
                                                         (-> req ::r/params :forum/topic)
@@ -506,10 +508,10 @@
                                       (-> req
                                           (assoc :forum/scope "community")
                                           (handler))))
-          routes (r/composite
-                  (r/mount forum :segment "community", :middleware community-forum-adapter)
-                  (r/resources :sites :site sites-controller
-                               (r/mount forum :segment "forum", :middleware site-forum-adapter)))
+          routes (r/group
+                   (r/mount forum :segment "community", :middleware community-forum-adapter)
+                   (r/resources :sites :site sites-controller
+                     (r/mount forum :segment "forum", :middleware site-forum-adapter)))
           routes-testing (partial route-testing routes)]
       (routes-testing :show [:forum/topic] {:forum/topic "1"}
                       {:uri "/community/topics/1", :request-method :get}
@@ -517,3 +519,45 @@
       (routes-testing :show [:site :forum/topic] {:site "1", :forum/topic "2"}
                       {:uri "/sites/1/forum/topics/2", :request-method :get}
                       "topic 2 inside site 1"))))
+
+(deftest pass
+  (testing "ordinal"
+    (let [handler (fn [req] "dashboard")
+          routes (r/section :admin
+                   (r/pass :dashboard handler))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :post [:admin :dashboard] {}
+                      {:uri "/admin/dashboard", :request-method :post}
+                      "dashboard")
+      (routes-testing :get [:admin :dashboard] {:segments ["private" "users"]}
+                      {:uri "/admin/dashboard/private/users", :request-method :get}
+                      "dashboard")))
+  (testing "with segment"
+    (let [handler (fn [req] "dashboard")
+          routes (r/section :admin
+                   (r/pass :dashboard handler :segment "monitoring"))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :post [:admin :dashboard] {}
+                      {:uri "/admin/monitoring", :request-method :post}
+                      "dashboard")))
+  (testing "without segment"
+    (let [main-controller {:show (fn [_] "main")}
+          not-found-handler (fn [req] "custom 404 error")
+          routes (r/group
+                   (r/resource :main main-controller :segment false)
+                   (r/pass :not-found not-found-handler :segment false))
+          routes-testing (partial route-testing routes)]
+      (routes-testing :show [:main] {}
+                      {:uri "", :request-method :get}
+                      "main")
+      (routes-testing :get [:not-found] {:segments ["foo" "bar"]}
+                      {:uri "/foo/bar", :request-method :get}
+                      "custom 404 error")))
+  (testing "middleware"
+    (let [handler (fn [req] "dashboard")
+          middleware (make-middleware "m")
+          routes (r/pass :dashboard handler :middleware middleware)
+          routes-testing (partial route-testing routes)]
+      (routes-testing :get [:dashboard] {}
+                      {:uri "/dashboard", :request-method :get}
+                      "m // dashboard"))))

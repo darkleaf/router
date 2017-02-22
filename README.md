@@ -8,6 +8,15 @@ Routing description is data structure that builds by functions.
 No macros, no foreign libs.
 Routing can be described in cljc files for code sharing.
 
+## Comparation
+
+| library | clj | cljs | syntax | reverse match | isolated apps | code structure | main abstraction | exporting | extensibility |
+| --- | --- | --- | ---  | --- | --- | --- | --- | --- | --- |
+| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   |             | url | | |
+| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   |             | url | | protocols |
+| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   |             | url | route description | protocols |
+| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | controllers | resource | explain api with cross-platform templates | protocols |
+
 ## Usage
 
 Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
@@ -38,7 +47,7 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
    :create (fn [req] (response "successfully created"))})
 
 (r/resources :projects :project projects-controller
-             (r/resource :completion project-completion-controller)
+  (r/resource :completion project-completion-controller)
 ```
 
 ## Resources
@@ -79,17 +88,15 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
 ;; :index [:people] {} -> /menschen
 ;; :show [:person] {:person 1} -> /menschen/1
-(r/resources :people :person people-controller
-             :segment "menschen")
+(r/resources :people :person people-controller :segment "menschen")
 
 ;; :index [:people] {} -> /
 ;; :show [:person] {:person 1} -> /1
-(r/resources :people :person people-controller
-             :segment false)
+(r/resources :people :person people-controller :segment false)
 
 ;; :put [:page :star] {:page 1} -> PUT /pages/1/star
 (r/resources :pages :page pages-controller
-             (r/resource :star star-controller)
+  (r/resource :star star-controller)
 ```
 
 ## Resource
@@ -120,29 +127,34 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/resource :star star-controller)
 
 ;; :show [:star] {} -> /estrella
-(r/resource :star star-controller
-            :segment "estrella")
+(r/resource :star star-controller :segment "estrella")
 
 ;; :show [:star] {} -> /
-(r/resource :star star-controller
-            :segment false)
+(r/resource :star star-controller :segment false)
 
 ;; :index [:star :comments] {} -> /star/comments
 (r/resource :star star-controller
-            (r/resources :comments :comment comments-controller)
+  (r/resources :comments :comment comments-controller)
 ```
 
-## Composite
+## Group
 
 Объединяет несколько роутов в один.
+Опционально добавляет middleware.
 
 ``` clojure
 (def posts-controller {:show (fn [req] (response "show post resp"))})
 (def news-controller {:show (fn [req] (response "show news resp"))})
-(def routes
-  (r/composite
-   (r/resources :posts :post posts-controller)
-   (r/resources :news :news news-controller)))
+
+;; :show [:post] {:post 1} -> /posts/1
+;; :show [:news] {:news 1} -> /news/1
+(r/group
+  (r/resources :posts :post posts-controller)
+  (r/resources :news :news news-controller)))
+
+(r/group :middleware (fn [h] (fn [req] (h req)))
+  (r/resources :posts :post posts-controller)
+  (r/resources :news :news news-controller))
 ```
 
 ## Section
@@ -150,21 +162,14 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 ``` clojure
 ;; :index [:admin :pages] {} -> /admin/pages
 (r/section :admin
-           (r/resources :pages :page pages-controller))
+  (r/resources :pages :page pages-controller))
 
 ;; :index [:admin :pages] {} -> /private/pages
 (r/section :admin, :segment "private"
-           (r/resources :pages :page pages-controller))
+  (r/resources :pages :page pages-controller))
 
 (r/section :admin, :middleware (fn [h] (fn [req] (h req)))
-           (r/resources :pages :page pages-controller))
-```
-
-## Wrapper
-
-``` clojure
-(r/wrapper (fn [h] (fn [req] (h req)))
-           (r/resources :pages :page pages-controller))
+  (r/resources :pages :page pages-controller))
 ```
 
 ## Guard
@@ -173,11 +178,10 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 ;; :index [:locale :pages] {:locale "ru"} -> /ru/pages
 ;; :index [:locale :pages] {:locale "wrong"} -> not found
 (r/guard :locale #{"ru" "en"}
-         (r/resources :pages :page pages-controller))
+  (r/resources :pages :page pages-controller))
 
-(r/guard :locale #{"ru" "en"}
-         :middleware (fn [h] (fn [req] (h req)))
-         (r/resources :pages :page pages-controller))
+(r/guard :locale #{"ru" "en"} :middleware (fn [h] (fn [req] (h req)))
+  (r/resources :pages :page pages-controller))
 ```
 
 ## Mount
@@ -191,16 +195,51 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
 ;; show [:admin :dashboard/main] {} -> /admin/dashboard
 (r/section :admin
-          (r/mount dashboard-app :segment "dashboard"))
+  (r/mount dashboard-app :segment "dashboard"))
+
+;; show [:admin :dashboard/main] {} -> /admin
+(r/section :admin
+  (r/mount dashboard-app :segment false))
+
+;; show [:admin :dashboard/main] {} -> /admin
+(r/section :admin
+  (r/mount dashboard-app))
 
 (r/section :admin
-          (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
+  (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
+```
+
+## Pass
+
+Передает любой запрос в текущей области в обработчик.
+Внутренние сегменты доступны как `(-> req ::r/params :segments)`.
+Экшен задается request-method.
+Может использоваться для задания специальной страницы 404 для текущей области.
+
+```clojure
+(defn handler (fn [req] (response "dashboard")))
+
+;; :get [:admin :dashboard] {} -> /admin/dashboard
+;; :post [:admin :dashboard] {:segments ["private" "users"]} -> POST /admin/dashboard/private/users
+(r/section :admin
+  (r/pass :dashboard handler))
+
+;; :get [:admin :dashboard] {} -> /admin/monitoring
+;; :post [:admin :dashboard] {:segments ["private" "users"]} -> POST /admin/monitoring/private/users
+(r/section :admin
+  (r/pass :dashboard handler :segment "monitoring"))
+
+;; :get [:not-found] {} -> /
+;; :post [:not-found] {:segments ["foo" "bar"]} -> POST /foo/bar
+(r/pass :not-found handler :segment false)
 ```
 
 ## Helpers
 
 ``` clojure
-(def controller {:index (fn [_] (response "ok"))})
+(def controller {:index (fn [req]
+                          (let [request-for (::r/request-for req)]
+                            (response (str (request-for :index [:pages] {})))))})
 (def pages (resources :pages :page controller))
 
 (def handler (make-handler pages))
@@ -254,9 +293,7 @@ You can create github issue with your question.
 ## TODO
 
 * refactoring
-* wildcard?
 * domains support?
-* pass (not-found)
 * docs
 * pre, assert
 
