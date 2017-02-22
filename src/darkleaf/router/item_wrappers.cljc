@@ -50,11 +50,14 @@
 (deftype Composite [items]
   i/Item
   (process [_ req]
-    (i/some-process req items))
+    (some #(i/process % req) items))
   (fill [_ req]
-    (i/some-fill req items))
+    (some #(i/fill % req) items))
   (explain [_ init]
-    (i/explain-all init items)))
+    (reduce (fn [acc item]
+              (into acc (i/explain item init)))
+            []
+            items)))
 
 (defn composite [items]
   (Composite. items))

@@ -2,7 +2,6 @@
   (:require [darkleaf.router.keywords :as k]
             [darkleaf.router.item :as i]
             [darkleaf.router.item-wrappers :as wrappers]
-            [darkleaf.router.group-impl :refer [group]]
             [darkleaf.router.action :refer [action]]
             [darkleaf.router.args :as args]
             [darkleaf.router.url :as url]))
@@ -35,29 +34,28 @@
         (args/parse 3 args)]
     (let [{:keys [middleware member-middleware collection-middleware
                   index new create show edit update put destroy]} controller]
-      (group :middleware middleware
-        (cond-> []
-          index (conj (action :index :get [] index))
-          :always (wrappers/composite)
-          collection-middleware (wrappers/wrap-middleware collection-middleware)
-          :always (wrappers/wrap-scope plural-name)
-          segment (wrappers/wrap-segment segment))
-        (cond-> []
-          new (conj (action :new :get ["new"] new))
-          create (conj (action :create :post [] create))
-          :always (wrappers/composite)
-          collection-middleware (wrappers/wrap-middleware collection-middleware)
-          :always (wrappers/wrap-scope singular-name)
-          segment (wrappers/wrap-segment segment))
-        (cond-> []
-          show    (conj (action :show :get [] show))
-          edit    (conj (action :edit :get ["edit"] edit))
-          update  (conj (action :update :patch [] update))
-          destroy (conj (action :destroy :delete [] destroy))
-          put     (conj (action :put :put [] put))
-          :always (into nested)
-          :always (wrappers/composite)
-          member-middleware (wrappers/wrap-middleware member-middleware)
-          :always (MemberScope. singular-name)
-          :always (wrappers/wrap-scope singular-name)
-          segment (wrappers/wrap-segment segment))))))
+      (cond-> (wrappers/composite
+               [(cond-> []
+                  index (conj (action :index :get [] index))
+                  :always (wrappers/composite)
+                  collection-middleware (wrappers/wrap-middleware collection-middleware)
+                  :always (wrappers/wrap-scope plural-name))
+                (cond-> []
+                  new (conj (action :new :get ["new"] new))
+                  create (conj (action :create :post [] create))
+                  :always (wrappers/composite)
+                  collection-middleware (wrappers/wrap-middleware collection-middleware)
+                  :always (wrappers/wrap-scope singular-name))
+                (cond-> []
+                  show    (conj (action :show :get [] show))
+                  edit    (conj (action :edit :get ["edit"] edit))
+                  update  (conj (action :update :patch [] update))
+                  destroy (conj (action :destroy :delete [] destroy))
+                  put     (conj (action :put :put [] put))
+                  :always (into nested)
+                  :always (wrappers/composite)
+                  member-middleware (wrappers/wrap-middleware member-middleware)
+                  :always (MemberScope. singular-name)
+                  :always (wrappers/wrap-scope singular-name))])
+        middleware (wrappers/wrap-middleware middleware)
+        segment (wrappers/wrap-segment segment)))))

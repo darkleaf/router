@@ -10,7 +10,7 @@
   #?(:cljs (:require-macros [darkleaf.router :refer [defalias]])))
 
 #?(:clj
-   (defmacro defalias [name orig]
+   (defmacro ^:private defalias [name orig]
      `(doto (def ~name ~orig)
         (alter-meta! merge (meta (var ~orig))))))
 

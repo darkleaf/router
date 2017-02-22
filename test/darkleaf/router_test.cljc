@@ -462,7 +462,7 @@
       (is (= {:page "1"} (::r/params returned-req))))))
 
 (deftest mount
-  (testing "ordinal"
+  (testing "ordinal with segment"
     (let [dashboard-controller {:show (fn [req]
                                         (let [request-for (::r/request-for req)]
                                           (str "dashboard: "
@@ -483,12 +483,13 @@
                       "dashboard: /en/dashboard")))
   (testing "without segment"
     (let [dashboard-controller {:show (fn [req] "dashboard")}
-          dashboard (r/resource :dashboard/main dashboard-controller :segment false)
-          routes (r/mount dashboard :segment false)
-          routes-testing (partial route-testing routes)]
-      (routes-testing :show [:dashboard/main] {}
-                      {:uri "", :request-method :get}
-                      "dashboard")))
+          dashboard (r/resource :dashboard/main dashboard-controller :segment false)]
+      (for [routes [(r/mount dashboard)
+                    (r/mount dashboard :segment false)]
+            :let [routes-testing (partial route-testing routes)]]
+        (routes-testing :show [:dashboard/main] {}
+                        {:uri "", :request-method :get}
+                        "dashboard"))))
   (testing "middleware"
     (let [forum-topics-controller {:show (fn [req] (str "topic "
                                                         (-> req ::r/params :forum/topic)
