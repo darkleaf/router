@@ -19,6 +19,26 @@ Routing can be described in cljc files for code sharing.
 
 ## Usage
 
+``` clojure
+(ns app.some-ns
+  (:require [darkleaf.router :as r]
+            [ring.util.response :refer [response]]))
+
+(def pages-controller
+  {:index (fn [req]
+            (let [request-for (::r/request-for req)]
+              (response
+                (str "best page uri: "
+                     (:uri (request-for :show [:page] {:page "best-page"}))))))
+   :show  (fn [req] (response "show resp"))})
+
+(def routes (r/resources :pages :page pages-controller))
+(def handler (r/make-hanlder routes))
+
+(handler {:request-method :get, :uri "/pages"}) ;; #=> {:status 200, :headers {}, :body "best page uri: /pages/best-page"}
+(handler {:request-method :get, :uri "/pages/1"}) ;; #=> response from show action
+```
+
 Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
 ## Concept
