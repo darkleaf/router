@@ -28,8 +28,8 @@ Routing can be described in cljc files for code sharing.
   {:index (fn [req]
             (let [request-for (::r/request-for req)]
               (response
-                (str "best page uri: "
-                     (:uri (request-for :show [:page] {:page "best-page"}))))))
+               (str "best page uri: "
+                    (:uri (request-for :show [:page] {:page "best-page"}))))))
    :show  (fn [req] (response "show resp"))})
 
 (def routes (r/resources :pages :page pages-controller))
@@ -69,7 +69,7 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
 Решение с помощью этой библиотеки:
 * Зная action, scope и params можно получить запрос,
-  который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"} )`.
+  который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
 * Главной абстракцией является rest ресурс.
   Контроллер ресурса может содержать только определенные экшены, см. resource composition.
 * Существует возможность примонтировать стороннее приложение, см. пример.
@@ -295,10 +295,10 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (def controller {:index (fn [req]
                           (let [request-for (::r/request-for req)]
                             (response (str (request-for :index [:pages] {})))))})
-(def pages (resources :pages :page controller))
+(def pages (r/resources :pages :page controller))
 
-(def handler (make-handler pages))
-(def request-for (make-request-for pages))
+(def handler (r/make-handler pages))
+(def request-for (r/make-request-for pages))
 
 (handler {:uri "/pages", :request-method :get}) ;; call index action from controller
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
