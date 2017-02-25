@@ -10,20 +10,75 @@ Routing can be described in cljc files for code sharing.
 
 ## Comparation
 
-| library | clj | cljs | syntax | reverse match | isolated apps | code structure | main abstraction | exporting | extensibility |
-| --- | --- | --- | ---  | --- | --- | --- | --- | --- | --- |
-| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   |             | url | | |
-| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   |             | url | | protocols |
-| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   |             | url | route description | protocols |
-| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | controllers | resource | explain api with cross-platform templates | protocols |
+| library | clj | cljs | syntax | reverse match | isolated apps | main abstraction | exporting | extensibility |
+| --- | --- | --- | ---  | --- | --- | --- | --- | --- |
+| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   | url      |                                           |           |
+| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   | url      |                                           | protocols |
+| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data                    | protocols |
+| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | explain api with cross-platform templates | protocols |
 
 ## Usage
 
+``` clojure
+(ns app.some-ns
+  (:require [darkleaf.router :as r]
+            [ring.util.response :refer [response]]))
+
+(def pages-controller
+  {:index (fn [req]
+            (let [request-for (::r/request-for req)]
+              (response
+               (str "best page uri: "
+                    (:uri (request-for :show [:page] {:page "best-page"}))))))
+   :show  (fn [req] (response "show resp"))})
+
+(def routes (r/resources :pages :page pages-controller))
+(def handler (r/make-hanlder routes))
+
+(handler {:request-method :get, :uri "/pages"}) ;; #=> {:status 200, :headers {}, :body "best page uri: /pages/best-page"}
+(handler {:request-method :get, :uri "/pages/1"}) ;; #=> response from show action
+```
+
 Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 
-## Concept
+## Rationale
 
-Библиотека подразумевает определенный подход к проектированию роутинга.
+Библиотеки роутинга на всех языках имеют схожий функционал: они сопоставляют uri с обработчиком с помощью шаблонов.
+Так устроены: compojure, sinatra, express.js, cowboy.
+
+Я вижу следующие недостатки такого подхода:
+* Отсутствие обратного роутинга. Url задается в шаблонах с помощью строк.
+* Отсутствует структура.
+  Библиотеки не предлагают из коробки решения для структурирования кода,
+  что ведет к хаосу в структуре url и спагетти-коду.
+* Отсутствуют подключаемые изолированные приложения,
+  т.к. нет возможности создать внутреннюю ссылку относительно точки монтирования.
+* Невозможно сериализовать роутинг и использовать его в других системах для формирования запросов.
+
+Большинство этих проблем решены в [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
+* Зная экшен, название контроллера и параметры можно получить url,
+  с помощью url helpers вида `edit_admin_post_path(@post.id)`.
+* Предполагается построение роутинга с помощью rest ресурсов.
+  Обработчики задаются экшенами в контроллерах.
+  Однако, фреймворк позволяет добавлять нестандартные экшены в контроллеры, что со временем ведет к спагетти-коду.
+* Существует поддержка engine.
+  Например, в свой проект можно примонтировать форум
+  или разбить приложение на несколько независимых.
+* Существует апи обхода роутов, например, его использует `rake routes`.
+  Cуществует [библиотека](https://github.com/railsware/js-routes), пробрасывающая url helpers в js.
+
+Решение с помощью этой библиотеки:
+* Зная action, scope и params можно получить запрос,
+  который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
+* Главной абстракцией является rest ресурс.
+  Контроллер ресурса может содержать только определенные экшены, см. [resource composition](#resouce-composition).
+* Существует возможность примонтировать стороннее приложение, см. [пример](#mount).
+* Библиотека имеет одинаковый интерфейс в clojure и clojurescript,
+  что позволяет разделять код между сервером и клиентом с помощью сljc.
+  Также имеется возможность экспортировать описание роутинга
+  в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
+
+## Resouce composition
 
 Например, есть ресурс Проект и его требуется завершать.
 Можно предположить, что проект должнен иметь экшен "завершить".
@@ -240,10 +295,10 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (def controller {:index (fn [req]
                           (let [request-for (::r/request-for req)]
                             (response (str (request-for :index [:pages] {})))))})
-(def pages (resources :pages :page controller))
+(def pages (r/resources :pages :page controller))
 
-(def handler (make-handler pages))
-(def request-for (make-request-for pages))
+(def handler (r/make-handler pages))
+(def request-for (r/make-request-for pages))
 
 (handler {:uri "/pages", :request-method :get}) ;; call index action from controller
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
