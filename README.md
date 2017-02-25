@@ -310,6 +310,23 @@ Handler adds keys for request map:
 * :darkleaf.router/params
 * :darkleaf.router/request-for for preventing circular dependency
 
+## Async
+
+Имеется поддержка [ассинхронных обработчиков ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html).
+
+``` clojure
+(def pages-controller {:index (fn [req resp raise]
+                                (future (resp response)))})
+
+(def pages (r/resources :pages :page pages-controller))
+(def handler (r/make-handler pages))
+
+(defn respond [val]) ;; from web server
+(defn error [e]) ;; from web server
+
+(handler {:request-method :get, :uri "/pages"} respond error)
+```
+
 ## Explain
 
 ```clojure
