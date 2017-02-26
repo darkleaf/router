@@ -244,6 +244,9 @@ Please see [test](test/darkleaf/router/section_test.cljc) for exhaustive example
 (r/guard :locale #{"ru" "en"}
   (r/resources :pages :page pages-controller))
 
+(r/guard :locale #(= "en" %)
+  (r/resources :pages :page pages-controller))
+
 (r/guard :locale #{"ru" "en"} :middleware (fn [h] (fn [req] (h req)))
   (r/resources :pages :page pages-controller))
 ```
