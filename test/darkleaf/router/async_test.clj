@@ -1,15 +1,15 @@
-(ns darkleaf.router-async-test
+(ns darkleaf.router.async-test
   (:require [darkleaf.router :as r]
             [clojure.test :refer [deftest testing is]]))
 
-(defn testing-hanlder [msg handler test-req test-resp]
+(defn testing-handler [msg handler test-req test-resp]
   (testing msg
-    (let [done? (promise)
-          check (fn [val]
-                  (is (= test-resp val))
-                  (deliver done? true))]
-      (handler test-req check check)
-      (is (deref done? 100 false)))))
+    (let [respond (promise)
+          exception (promise)]
+      (handler test-req respond exception)
+      (is (= test-resp
+             (deref respond 100 nil)))
+      (is (not (realized? exception))))))
 
 (deftest async-handler
   (let [response {:status 200
@@ -20,11 +20,11 @@
                                      (resp response)))}
         pages (r/resources :pages :page pages-controller)
         handler (r/make-handler pages)]
-    (testing-hanlder "found"
+    (testing-handler "found"
                      handler
                      {:uri "/pages", :request-method :get}
                      response)
-    (testing-hanlder "not found"
+    (testing-handler "not found"
                      handler
                      {:uri "/wrong/url", :request-method :get}
                      {:status 404, :headers {}, :body "404 error"})))

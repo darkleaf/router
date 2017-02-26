@@ -10,103 +10,58 @@ Routing can be described in cljc files for code sharing.
 
 ## Comparation
 
-| library | clj | cljs | syntax | reverse match | isolated apps | main abstraction | exporting | extensibility |
+| library | clj | cljs | dsl | named routes | mountable apps | abstraction | export format | extensibility |
 | --- | --- | --- | ---  | --- | --- | --- | --- | --- |
-| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   | url      |                                           |           |
-| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   | url      |                                           | protocols |
-| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data                    | protocols |
-| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | explain api with cross-platform templates | protocols |
+| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   | url      |                          |           |
+| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   | url      |                          | protocols |
+| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data   | protocols |
+| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | [explain data](#explain) | protocols |
 
-## Usage
+## Use cases
 
-``` clojure
-(ns app.some-ns
-  (:require [darkleaf.router :as r]
-            [ring.util.response :refer [response]]))
-
-(def pages-controller
-  {:index (fn [req]
-            (let [request-for (::r/request-for req)]
-              (response
-               (str "best page uri: "
-                    (:uri (request-for :show [:page] {:page "best-page"}))))))
-   :show  (fn [req] (response "show resp"))})
-
-(def routes (r/resources :pages :page pages-controller))
-(def handler (r/make-hanlder routes))
-
-(handler {:request-method :get, :uri "/pages"}) ;; #=> {:status 200, :headers {}, :body "best page uri: /pages/best-page"}
-(handler {:request-method :get, :uri "/pages/1"}) ;; #=> response from show action
-```
-
-Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
+* [resource compostion / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
+* [member middleware](test/darkleaf/router/use_cases/member_middleware_test.cljc)
+* [extending / domain constraint](test/darkleaf/router/use_cases/domain_constraint_test.cljc)
 
 ## Rationale
 
-Библиотеки роутинга на всех языках имеют схожий функционал: они сопоставляют uri с обработчиком с помощью шаблонов.
-Так устроены: compojure, sinatra, express.js, cowboy.
+Библиотеки роутинга на всех языках работают одинаково: они только сопоставляют uri с обработчиком с помощью шаблонов.
+Например compojure, sinatra, express.js, cowboy.
 
-Я вижу следующие недостатки такого подхода:
+Недостатки такого подхода:
 
-1. Отсутствие обратного роутинга. Url задается в шаблонах с помощью строк.
+1. Нет обратного роутинга или именованного роутинга. Url задается в шаблонах с помощью строк.
 2. Отсутствует структура.
    Библиотеки не предлагают из коробки решения для структурирования кода,
-   что ведет к хаосу в структуре url и спагетти-коду.
-3. Отсутствуют подключаемые изолированные приложения,
-   т.к. нет возможности создать внутреннюю ссылку относительно точки монтирования.
+   что ведет к хаосу в url и спагетти-коду.
+3. Нет подключаемых приложений,
+   т.к. плагин не может создать внутреннюю ссылку относительно точки монтирования.
 4. Невозможно сериализовать роутинг и использовать его в других системах для формирования запросов.
 
 Большинство этих проблем решены в [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
 
-1. Зная экшен, название контроллера и параметры можно получить url,
-   с помощью url helpers вида `edit_admin_post_path(@post.id)`.
-2. Предполагается построение роутинга с помощью rest ресурсов.
-   Обработчики задаются экшенами в контроллерах.
-   Однако, фреймворк позволяет добавлять нестандартные экшены в контроллеры, что со временем ведет к спагетти-коду.
-3. Существует поддержка engine.
-   Например, в свой проект можно примонтировать форум
-   или разбить приложение на несколько независимых.
-4. Существует апи обхода роутов, например, его использует `rake routes`.
-   Cуществует [библиотека](https://github.com/railsware/js-routes), пробрасывающая url helpers в js.
+1. Зная экшен, название контроллера и параметры можно получить url, например так: `edit_admin_post_path(@post.id)`.
+2. Предлагается использовать rest ресурсы для описания роутинга.
+   Экшены контроллеров соответсвуют обработчикам.
+   Однако, фреймворк позволяет добавлять нестандартные экшены в контроллер, что со временем преващает его в спагетти.
+3. Есть поддержка engine.
+   Например, в свой проект можно примонтировать движок форума
+   или разбить приложение на несколько.
+4. Есть апи обхода роутов, который использует `rake routes`.
+   Библиотека [js-routes](https://github.com/railsware/js-routes) пробрасывает url helpers в js.
 
-Решение с помощью этой библиотеки:
+Решение с помощью моей библиотеки:
 
 1. Зная action, scope и params можно получить запрос,
    который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
 2. Главной абстракцией является rest ресурс.
-   Контроллер ресурса может содержать только определенные экшены, см. [resource composition](#resouce-composition).
+   Контроллер ресурса может содержать только определенные экшены,
+   как жить с этим ограничением см. в [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
 3. Существует возможность примонтировать стороннее приложение, см. [пример](#mount).
 4. Библиотека имеет одинаковый интерфейс в clojure и clojurescript,
    что позволяет разделять код между сервером и клиентом с помощью сljc.
-   Также имеется возможность экспортировать описание роутинга
+   Также можно экспортировать описание роутинга
    в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
-
-## Resouce composition
-
-Например, есть ресурс Проект и его требуется завершать.
-Можно предположить, что проект должнен иметь экшен "завершить".
-Спустя время, поступает новое требование: должна быть форма для указания данных при завершении проекта.
-В этом случае придется добавлять экшен "показать форму завершения проекта".
-При таком подходе контроллер быстро разрастается и усложняется, фактически начинает контроллировать несколько ресурсов.
-
-В этой библиотеке нельзя добавлять дополнительные экшены к контроллеру,
-вместо этого предлагается использовать вложенные ресурсы.
-
-В данном примере это можно реализовать только единственным способом:
-ресурс Проект содержит вложенный ресурс Завершение,
-для завершения проекта вызывается экшен create ресурса Завершение.
-
-``` clojure
-(def projects-controller
-  {:index (fn [req] (response "projects list"))
-   :show (fn [req] (response "project page"))})
-(def project-completion-controller
-  {:new (fn [req] (response "completion form"))
-   :create (fn [req] (response "successfully created"))})
-
-(r/resources :projects :project projects-controller
-  (r/resource :completion project-completion-controller)
-```
 
 ## Resources
 
@@ -157,6 +112,14 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resource :star star-controller)
 ```
 
+Middleware бывают 3х типов:
+* middleware применяется ко всем экшенам и обработчикам, включая вложенные
+* collection-middleware применятеся только для index, new и create
+* member-middleware применяется к show, edit, update, put, delete и всем вложенным обработчикам,
+  подробнее можно посмотреть [тут](test/darkleaf/router/use_cases/member_middleware_test.cljc).
+
+Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
+
 ## Resource
 
 | Action name | Scope | Params | Http method | Url | Used for
@@ -195,6 +158,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :comments :comment comments-controller)
 ```
 
+Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive examples.
+
 ## Group
 
 Объединяет несколько роутов в один.
@@ -215,6 +180,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :news :news news-controller))
 ```
 
+Please see [test](test/darkleaf/router/group_test.cljc) for exhaustive examples.
+
 ## Section
 
 ``` clojure
@@ -230,6 +197,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :pages :page pages-controller))
 ```
 
+Please see [test](test/darkleaf/router/section_test.cljc) for exhaustive examples.
+
 ## Guard
 
 ``` clojure
@@ -238,15 +207,19 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/guard :locale #{"ru" "en"}
   (r/resources :pages :page pages-controller))
 
+(r/guard :locale #(= "en" %)
+  (r/resources :pages :page pages-controller))
+
 (r/guard :locale #{"ru" "en"} :middleware (fn [h] (fn [req] (h req)))
   (r/resources :pages :page pages-controller))
 ```
+
+Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 ## Mount
 
 Позволяет примонтировать изолированное приложение.
 Внутренний request-for работает относительно точки монтирования.
-Смотри подробные примеры в тестах.
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
@@ -266,6 +239,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/section :admin
   (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
 ```
+
+Please see [test](test/darkleaf/router/mount_test.cljc) for exhaustive examples.
 
 ## Pass
 
@@ -292,6 +267,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/pass :not-found handler :segment false)
 ```
 
+Please see [test](test/darkleaf/router/pass_test.cljc) for exhaustive examples.
+
 ## Helpers
 
 ``` clojure
@@ -307,11 +284,15 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
 ```
 
+## Additional request keys
+
 Handler adds keys for request map:
 * :darkleaf.router/action
 * :darkleaf.router/scope
 * :darkleaf.router/params
-* :darkleaf.router/request-for for preventing circular dependency
+* :darkleaf.router/request-for
+
+Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for exhaustive examples.
 
 ## Async
 
@@ -329,6 +310,10 @@ Handler adds keys for request map:
 
 (handler {:request-method :get, :uri "/pages"} respond error)
 ```
+
+Please see [clj test](test/darkleaf/router/async_test.clj)
+and [cljs test](test/darkleaf/router/async_test.cljs)
+for exhaustive examples.
 
 ## Explain
 
@@ -361,14 +346,26 @@ Handler adds keys for request map:
 поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
 Соответствие параметров шаблона и :params задается через :params-kmap.
 
+## HTML
+
+HTML не умеет ничего кроме GET и POST.
+Что бы отправить форму с помощью PUT, PATCH или DELETE
+нужно добавить в форму скрытое поле `_method` со значением `put`, `patch` или `delete`.
+Также необходимо обернуть обработчик с помощью
+`darkleaf.router.html.method-override/wrap-method-override`.
+Use it with `ring.middleware.params/wrap-params`
+and `ring.middleware.keyword-params/wrap-keyword-params`.
+
+См. [примеры](test/darkleaf/router/html/method_override_test.cljc).
+
+В будущих релизах планирую добавить js код для отправки произвольных запросов с помощью html ссылок.
+
 ## Questions
 
 You can create github issue with your question.
 
 ## TODO
 
-* refactoring
-* domains support?
 * docs
 * pre, assert
 
