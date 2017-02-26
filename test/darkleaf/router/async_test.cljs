@@ -1,4 +1,4 @@
-(ns darkleaf.router-async-test
+(ns darkleaf.router.async-test
   (:require [darkleaf.router :as r])
   (:import [goog.async nextTick])
   (:require-macros [cljs.test :refer [deftest is async]]))

@@ -1,4 +1,4 @@
-(ns darkleaf.router-async-test
+(ns darkleaf.router.async-test
   (:require [darkleaf.router :as r]
             [clojure.test :refer [deftest testing is]]))
 
