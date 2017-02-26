@@ -39,8 +39,6 @@ Routing can be described in cljc files for code sharing.
 (handler {:request-method :get, :uri "/pages/1"}) ;; #=> response from show action
 ```
 
-Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
-
 ## Rationale
 
 Библиотеки роутинга на всех языках имеют схожий функционал: они сопоставляют uri с обработчиком с помощью шаблонов.
@@ -157,6 +155,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resource :star star-controller)
 ```
 
+Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
+
 ## Resource
 
 | Action name | Scope | Params | Http method | Url | Used for
@@ -195,6 +195,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :comments :comment comments-controller)
 ```
 
+Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive examples.
+
 ## Group
 
 Объединяет несколько роутов в один.
@@ -215,6 +217,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :news :news news-controller))
 ```
 
+Please see [test](test/darkleaf/router/group_test.cljc) for exhaustive examples.
+
 ## Section
 
 ``` clojure
@@ -230,6 +234,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/resources :pages :page pages-controller))
 ```
 
+Please see [test](test/darkleaf/router/section_test.cljc) for exhaustive examples.
+
 ## Guard
 
 ``` clojure
@@ -241,6 +247,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/guard :locale #{"ru" "en"} :middleware (fn [h] (fn [req] (h req)))
   (r/resources :pages :page pages-controller))
 ```
+
+Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 ## Mount
 
@@ -267,6 +275,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
   (r/mount dashboard-app :segment "dashboard", :middleware (fn [h] (fn [req] (h req)))))
 ```
 
+Please see [test](test/darkleaf/router/mount_test.cljc) for exhaustive examples.
+
 ## Pass
 
 Передает любой запрос в текущей области в обработчик.
@@ -292,6 +302,8 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (r/pass :not-found handler :segment false)
 ```
 
+Please see [test](test/darkleaf/router/pass_test.cljc) for exhaustive examples.
+
 ## Helpers
 
 ``` clojure
@@ -307,11 +319,15 @@ Please see [tests](test/darkleaf/router_test.cljc) for exhaustive examples.
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
 ```
 
+## Additional request keys
+
 Handler adds keys for request map:
 * :darkleaf.router/action
 * :darkleaf.router/scope
 * :darkleaf.router/params
-* :darkleaf.router/request-for for preventing circular dependency
+* :darkleaf.router/request-for
+
+Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for exhaustive examples.
 
 ## Async
 
@@ -329,6 +345,10 @@ Handler adds keys for request map:
 
 (handler {:request-method :get, :uri "/pages"} respond error)
 ```
+
+Please see [clj test](test/darkleaf/router/async_test.clj)
+and [cljs test](test/darkleaf/router/async_test.cljs)
+for exhaustive examples.
 
 ## Explain
 
