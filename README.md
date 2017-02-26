@@ -112,6 +112,12 @@ Routing can be described in cljc files for code sharing.
   (r/resource :star star-controller)
 ```
 
+Middleware бывают 3х типов:
+* middleware применяется ко всем экшенам и обработчикам, включая вложенные
+* collection-middleware применятеся только для index, new и create
+* member-middleware применяется к show, edit, update, put, delete и всем вложенным обработчикам,
+  подробнее можно посмотреть [тут](test/darkleaf/router/use_cases/member_middleware_test.cljc).
+
 Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
 
 ## Resource
