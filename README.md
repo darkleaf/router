@@ -360,6 +360,20 @@ for exhaustive examples.
 поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
 Соответствие параметров шаблона и :params задается через :params-kmap.
 
+## HTML
+
+HTML не умеет ничего кроме GET и POST.
+Что бы отправить форму с помощью PUT, PATCH или DELETE
+нужно добавить в форму скрытое поле `_method` со значением `put`, `patch` или `delete`.
+Также необходимо обернуть обработчик с помощью
+`darkleaf.router.html.method-override/wrap-method-override`.
+Use it with `ring.middleware.params/wrap-params`
+and `ring.middleware.keyword-params/wrap-keyword-params`.
+
+См. [примеры](test/darkleaf/router/html/method_override_test.cljc).
+
+В будущих релизах планирую добавить js код для отправки произвольных запросов с помощью html ссылок.
+
 ## Questions
 
 You can create github issue with your question.

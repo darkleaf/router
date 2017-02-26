@@ -10,7 +10,8 @@
             [darkleaf.router.resource-test]
             [darkleaf.router.resources-test]
             [darkleaf.router.section-test]
-            [darkleaf.router.use-cases.resource-composition]
+            [darkleaf.router.html.method-override-test]
+            [darkleaf.router.use-cases.resource-composition-test]
             [darkleaf.router.use-cases.member-middleware-test]
             [darkleaf.router.use-cases.domain-constraint-test]))
 
@@ -25,6 +26,7 @@
  'darkleaf.router.resource-test
  'darkleaf.router.resources-test
  'darkleaf.router.section-test
- 'darkleaf.router.use-cases.resource-composition
+ 'darkleaf.router.html.method-override-test
+ 'darkleaf.router.use-cases.resource-composition-test
  'darkleaf.router.use-cases.member-middleware-test
  'darkleaf.router.use-cases.domain-constraint-test)
