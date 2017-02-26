@@ -10,12 +10,12 @@ Routing can be described in cljc files for code sharing.
 
 ## Comparation
 
-| library | clj | cljs | syntax | reverse match | isolated apps | main abstraction | exporting | extensibility |
+| library | clj | cljs | dsl | named routes | mountable apps | abstraction | export format | extensibility |
 | --- | --- | --- | ---  | --- | --- | --- | --- | --- |
-| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   | url      |                                           |           |
-| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   | url      |                                           | protocols |
-| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data                    | protocols |
-| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | explain api with cross-platform templates | protocols |
+| [compojure](https://github.com/weavejester/compojure) | ✓ |   | macros         |   |   | url      |                          |           |
+| [secretary](https://github.com/gf3/secretary)         |   | ✓ | macros         | ✓ |   | url      |                          | protocols |
+| [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data   | protocols |
+| [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | [explain data](#explain) | protocols |
 
 ## Usage
 
