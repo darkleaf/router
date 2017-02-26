@@ -17,7 +17,11 @@ Routing can be described in cljc files for code sharing.
 | [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data   | protocols |
 | [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | [explain data](#explain) | protocols |
 
-## Usage
+## Use cases
+
+* [resource compostion / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
+* [member middleware](test/darkleaf/router/use_cases/member_middleware_test.cljc)
+* [extending / domain constraint](test/darkleaf/router/use_cases/domain_constraint_test.cljc)
 
 ``` clojure
 (ns app.some-ns
@@ -72,39 +76,12 @@ Routing can be described in cljc files for code sharing.
 1. Зная action, scope и params можно получить запрос,
    который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
 2. Главной абстракцией является rest ресурс.
-   Контроллер ресурса может содержать только определенные экшены, см. [resource composition](#resouce-composition).
+   Контроллер ресурса может содержать только определенные экшены, см. [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
 3. Существует возможность примонтировать стороннее приложение, см. [пример](#mount).
 4. Библиотека имеет одинаковый интерфейс в clojure и clojurescript,
    что позволяет разделять код между сервером и клиентом с помощью сljc.
    Также имеется возможность экспортировать описание роутинга
    в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
-
-## Resouce composition
-
-Например, есть ресурс Проект и его требуется завершать.
-Можно предположить, что проект должнен иметь экшен "завершить".
-Спустя время, поступает новое требование: должна быть форма для указания данных при завершении проекта.
-В этом случае придется добавлять экшен "показать форму завершения проекта".
-При таком подходе контроллер быстро разрастается и усложняется, фактически начинает контроллировать несколько ресурсов.
-
-В этой библиотеке нельзя добавлять дополнительные экшены к контроллеру,
-вместо этого предлагается использовать вложенные ресурсы.
-
-В данном примере это можно реализовать только единственным способом:
-ресурс Проект содержит вложенный ресурс Завершение,
-для завершения проекта вызывается экшен create ресурса Завершение.
-
-``` clojure
-(def projects-controller
-  {:index (fn [req] (response "projects list"))
-   :show (fn [req] (response "project page"))})
-(def project-completion-controller
-  {:new (fn [req] (response "completion form"))
-   :create (fn [req] (response "successfully created"))})
-
-(r/resources :projects :project projects-controller
-  (r/resource :completion project-completion-controller)
-```
 
 ## Resources
 
@@ -257,7 +234,6 @@ Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 Позволяет примонтировать изолированное приложение.
 Внутренний request-for работает относительно точки монтирования.
-Смотри подробные примеры в тестах.
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
