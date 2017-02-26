@@ -23,64 +23,44 @@ Routing can be described in cljc files for code sharing.
 * [member middleware](test/darkleaf/router/use_cases/member_middleware_test.cljc)
 * [extending / domain constraint](test/darkleaf/router/use_cases/domain_constraint_test.cljc)
 
-``` clojure
-(ns app.some-ns
-  (:require [darkleaf.router :as r]
-            [ring.util.response :refer [response]]))
-
-(def pages-controller
-  {:index (fn [req]
-            (let [request-for (::r/request-for req)]
-              (response
-               (str "best page uri: "
-                    (:uri (request-for :show [:page] {:page "best-page"}))))))
-   :show  (fn [req] (response "show resp"))})
-
-(def routes (r/resources :pages :page pages-controller))
-(def handler (r/make-hanlder routes))
-
-(handler {:request-method :get, :uri "/pages"}) ;; #=> {:status 200, :headers {}, :body "best page uri: /pages/best-page"}
-(handler {:request-method :get, :uri "/pages/1"}) ;; #=> response from show action
-```
-
 ## Rationale
 
-Библиотеки роутинга на всех языках имеют схожий функционал: они сопоставляют uri с обработчиком с помощью шаблонов.
-Так устроены: compojure, sinatra, express.js, cowboy.
+Библиотеки роутинга на всех языках работают одинаково: они только сопоставляют uri с обработчиком с помощью шаблонов.
+Например compojure, sinatra, express.js, cowboy.
 
-Я вижу следующие недостатки такого подхода:
+Недостатки такого подхода:
 
-1. Отсутствие обратного роутинга. Url задается в шаблонах с помощью строк.
+1. Нет обратного роутинга или именованного роутинга. Url задается в шаблонах с помощью строк.
 2. Отсутствует структура.
    Библиотеки не предлагают из коробки решения для структурирования кода,
-   что ведет к хаосу в структуре url и спагетти-коду.
-3. Отсутствуют подключаемые изолированные приложения,
-   т.к. нет возможности создать внутреннюю ссылку относительно точки монтирования.
+   что ведет к хаосу в url и спагетти-коду.
+3. Нет подключаемых приложений,
+   т.к. плагин не может создать внутреннюю ссылку относительно точки монтирования.
 4. Невозможно сериализовать роутинг и использовать его в других системах для формирования запросов.
 
 Большинство этих проблем решены в [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
 
-1. Зная экшен, название контроллера и параметры можно получить url,
-   с помощью url helpers вида `edit_admin_post_path(@post.id)`.
-2. Предполагается построение роутинга с помощью rest ресурсов.
-   Обработчики задаются экшенами в контроллерах.
-   Однако, фреймворк позволяет добавлять нестандартные экшены в контроллеры, что со временем ведет к спагетти-коду.
-3. Существует поддержка engine.
-   Например, в свой проект можно примонтировать форум
-   или разбить приложение на несколько независимых.
-4. Существует апи обхода роутов, например, его использует `rake routes`.
-   Cуществует [библиотека](https://github.com/railsware/js-routes), пробрасывающая url helpers в js.
+1. Зная экшен, название контроллера и параметры можно получить url, например так: `edit_admin_post_path(@post.id)`.
+2. Предлагается использовать rest ресурсы для описания роутинга.
+   Экшены контроллеров соответсвуют обработчикам.
+   Однако, фреймворк позволяет добавлять нестандартные экшены в контроллер, что со временем преващает его в спагетти.
+3. Есть поддержка engine.
+   Например, в свой проект можно примонтировать движок форума
+   или разбить приложение на несколько.
+4. Есть апи обхода роутов, который использует `rake routes`.
+   Библиотека [js-routes](https://github.com/railsware/js-routes) пробрасывает url helpers в js.
 
-Решение с помощью этой библиотеки:
+Решение с помощью моей библиотеки:
 
 1. Зная action, scope и params можно получить запрос,
    который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
 2. Главной абстракцией является rest ресурс.
-   Контроллер ресурса может содержать только определенные экшены, см. [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
+   Контроллер ресурса может содержать только определенные экшены,
+   как жить с этим ограничением см. в [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
 3. Существует возможность примонтировать стороннее приложение, см. [пример](#mount).
 4. Библиотека имеет одинаковый интерфейс в clojure и clojurescript,
    что позволяет разделять код между сервером и клиентом с помощью сljc.
-   Также имеется возможность экспортировать описание роутинга
+   Также можно экспортировать описание роутинга
    в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
 
 ## Resources
@@ -380,8 +360,6 @@ You can create github issue with your question.
 
 ## TODO
 
-* refactoring
-* domains support?
 * docs
 * pre, assert
 
