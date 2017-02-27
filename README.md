@@ -4,9 +4,6 @@
 [![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
 Bidirectional RESTfull Ring router for clojure and clojurescript.
-Routing description is data structure that builds by functions.
-No macros, no foreign libs.
-Routing can be described in cljc files for code sharing.
 
 ## Comparation
 
@@ -112,10 +109,10 @@ Routing can be described in cljc files for code sharing.
   (r/resource :star star-controller)
 ```
 
-Middleware бывают 3х типов:
-* middleware применяется ко всем экшенам и обработчикам, включая вложенные
-* collection-middleware применятеся только для index, new и create
-* member-middleware применяется к show, edit, update, put, delete и всем вложенным обработчикам,
+There are several types of middlewares:
+* `middleware` применяется ко всем экшенам и обработчикам, включая вложенные
+* `collection-middleware` применятеся только для index, new и create
+* `member-middleware` применяется к show, edit, update, put, delete и всем вложенным обработчикам,
   подробнее можно посмотреть [тут](test/darkleaf/router/use_cases/member_middleware_test.cljc).
 
 Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
@@ -162,8 +159,7 @@ Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive exampl
 
 ## Group
 
-Объединяет несколько роутов в один.
-Опционально добавляет middleware.
+This function combines multiple routed into one and apply optional middleware.
 
 ``` clojure
 (def posts-controller {:show (fn [req] (response "show post resp"))})
@@ -218,8 +214,12 @@ Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 ## Mount
 
-Позволяет примонтировать изолированное приложение.
+This function mount an isolated application.
+
+**BLA_BLA**
+"request-for" from a request map concern the mount point.
 Внутренний request-for работает относительно точки монтирования.
+
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
@@ -244,10 +244,10 @@ Please see [test](test/darkleaf/router/mount_test.cljc) for exhaustive examples.
 
 ## Pass
 
-Передает любой запрос в текущей области в обработчик.
+This function pass any request to handler.
 Внутренние сегменты доступны как `(-> req ::r/params :segments)`.
-Экшен задается request-method.
-Может использоваться для задания специальной страницы 404 для текущей области.
+Action complies request method.
+Useful for handle 404 errors.
 
 ```clojure
 (defn handler (fn [req] (response "dashboard")))
@@ -296,7 +296,7 @@ Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for ex
 
 ## Async
 
-Имеется поддержка [ассинхронных обработчиков ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html).
+[Asynchronous ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html) handlers support.
 
 ``` clojure
 (def pages-controller {:index (fn [req resp raise]
@@ -335,28 +335,28 @@ for exhaustive examples.
   :req {:uri "/people{/%3Aperson}", :request-method :get}}]
 ```
 
-Удобно использовать для:
- + наглядного отображения структуры роутинга
- + поиска ошибок
- + кроссплатформенной сериализации роутинга
- + построения документации
+Useful for:
+ + inspection of the structure
+ + mistakes detection
+ + cross-platform routes serialization
+ + documentation generation
 
-Для шаблонизации используется [URI Template](https://tools.ietf.org/html/rfc6570).
+It use [URI Template](https://tools.ietf.org/html/rfc6570).
 Т.к. clojure keywords содержат запрещенные символы,
 поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
 Соответствие параметров шаблона и :params задается через :params-kmap.
 
 ## HTML
 
-HTML не умеет ничего кроме GET и POST.
-Что бы отправить форму с помощью PUT, PATCH или DELETE
-нужно добавить в форму скрытое поле `_method` со значением `put`, `patch` или `delete`.
-Также необходимо обернуть обработчик с помощью
-`darkleaf.router.html.method-override/wrap-method-override`.
-Use it with `ring.middleware.params/wrap-params`
+HTML don't support HTTP methods except GET и POST.
+You can add hidden input '_method' into form
+and apply `darkleaf.router.html.method-override/wrap-method-override` middleware.
+This input can contain "put", "patch", "delete", etc.
+`wrap-method-override` middleware depends
+on `ring.middleware.params/wrap-params`
 and `ring.middleware.keyword-params/wrap-keyword-params`.
 
-См. [примеры](test/darkleaf/router/html/method_override_test.cljc).
+Please see [examples](test/darkleaf/router/html/method_override_test.cljc).
 
 В будущих релизах планирую добавить js код для отправки произвольных запросов с помощью html ссылок.
 
