@@ -2,20 +2,18 @@
   (:require [clojure.test :refer [deftest testing is]]
             [darkleaf.router :as r]))
 
-;; Есть ресурс Проект и его требуется завершать.
-;; Можно предположить, что проект должнен иметь экшен "завершить".
-;; Спустя время, поступает новое требование:
-;; должна быть форма для указания данных при завершении проекта.
-;; В этом случае придется добавлять экшен "показать форму завершения проекта".
-;; При таком подходе контроллер быстро разрастается и усложняется,
-;; фактически начинает контроллировать несколько ресурсов.
-;;
-;; Hельзя добавлять дополнительные экшены к контроллеру,
-;; вместо этого предлагается использовать вложенные ресурсы.
-;;
-;; В данном примере это можно реализовать только единственным способом:
-;; ресурс Проект содержит вложенный ресурс Завершение,
-;; для завершения проекта вызывается экшен create ресурса Завершение.
+;; There is a project resource and it needs to be completed.
+;; Supposed project controller should have the complete action.
+;; Some time later a new requirement is obtained:
+;; there must be the form for data specifying while project completes.
+;; In this case it is necessary to add actions for completed form.
+;; Controller grows and becomes complicated fast with this approach.
+
+;; In cases like that recommended to use nested resources
+;; instead of adding extra actions to controller.
+
+;; In this library there is only the one way to implement this requirement:
+;; project resource must contains nested completion resource.
 
 (deftest usage
   (let [projects-controller {:index (fn [req] "projects list")
