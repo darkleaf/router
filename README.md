@@ -4,9 +4,6 @@
 [![Clojars Project](https://img.shields.io/clojars/v/darkleaf/router.svg)](https://clojars.org/darkleaf/router)
 
 Bidirectional RESTfull Ring router for clojure and clojurescript.
-Routing description is data structure that builds by functions.
-No macros, no foreign libs.
-Routing can be described in cljc files for code sharing.
 
 ## Comparation
 
@@ -19,49 +16,44 @@ Routing can be described in cljc files for code sharing.
 
 ## Use cases
 
-* [resource compostion / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
+* [resource composition / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
 * [member middleware](test/darkleaf/router/use_cases/member_middleware_test.cljc)
 * [extending / domain constraint](test/darkleaf/router/use_cases/domain_constraint_test.cljc)
 
 ## Rationale
 
-Библиотеки роутинга на всех языках работают одинаково: они только сопоставляют uri с обработчиком с помощью шаблонов.
-Например compojure, sinatra, express.js, cowboy.
+Routing libraries work similarly on all programming languages: they only map uri with a handler using templates.
+For example compojure, sinatra, express.js, cowboy.
 
-Недостатки такого подхода:
+There are some downsides of this approach.
 
-1. Нет обратного роутинга или именованного роутинга. Url задается в шаблонах с помощью строк.
-2. Отсутствует структура.
-   Библиотеки не предлагают из коробки решения для структурирования кода,
-   что ведет к хаосу в url и спагетти-коду.
-3. Нет подключаемых приложений,
-   т.к. плагин не может создать внутреннюю ссылку относительно точки монтирования.
-4. Невозможно сериализовать роутинг и использовать его в других системах для формирования запросов.
+1. No reverse or named routing. Url is set in templates as a string.
+2. Absence of structure. Libraries do not offer any ways of code structure, that results of chaos in url and unclean code.
+3. Inability to mount an external application. Inability to create html links related with mount point.
+4. Inability to serialize routing and use it in other external applications for request forming.
 
-Большинство этих проблем решены в [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
+Most of these problems are solved in [Ruby on Rails](http://guides.rubyonrails.org/routing.html).
 
-1. Зная экшен, название контроллера и параметры можно получить url, например так: `edit_admin_post_path(@post.id)`.
-2. Предлагается использовать rest ресурсы для описания роутинга.
-   Экшены контроллеров соответсвуют обработчикам.
-   Однако, фреймворк позволяет добавлять нестандартные экшены в контроллер, что со временем преващает его в спагетти.
-3. Есть поддержка engine.
-   Например, в свой проект можно примонтировать движок форума
-   или разбить приложение на несколько.
-4. Есть апи обхода роутов, который использует `rake routes`.
-   Библиотека [js-routes](https://github.com/railsware/js-routes) пробрасывает url helpers в js.
+1. If you know the action, controller name and parameters, you can get url, for example: edit_admin_post_path(@post.id).
+2. You can use rest resources to describe routing.
+   Actions of controllers match to handlers.
+   However, framework allows to add non-standart actions into controller,
+   that makes your code unlean later.
+3. There is an engine support. For example, you can mount a forum engine into your project or
+   decompose your application into several engines.
+4. There is an API for routes traversing, which uses `rake routes` command. The library
+   [js-routes](https://github.com/railsware/js-routes) brings url helpers in js.
 
-Решение с помощью моей библиотеки:
+Solution my library suggests.
 
-1. Зная action, scope и params можно получить запрос,
-   который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
-2. Главной абстракцией является rest ресурс.
-   Контроллер ресурса может содержать только определенные экшены,
-   как жить с этим ограничением см. в [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
-3. Существует возможность примонтировать стороннее приложение, см. [пример](#mount).
-4. Библиотека имеет одинаковый интерфейс в clojure и clojurescript,
-   что позволяет разделять код между сервером и клиентом с помощью сljc.
-   Также можно экспортировать описание роутинга
-   в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
+1. Knowing action, scope and params, we can get the request, which invokes the handler of this route:
+   `(request-for :edit [:admin :post] {:post "1"})`.
+2. The main abstraction is the rest resource. Controller contains only standard actions.
+   You can see [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc) how to deal with it.
+3. Ability to mount an external application. See [example](#mount) for details.
+4. The library interface is identical in clojure and clojurecript, that allows to share the code between server and
+   client using .cljc files. You can also export routing description with cross-platform templates as a simple data
+   structure. See [example](#explain) for details.
 
 ## Resources
 
@@ -112,13 +104,14 @@ Routing can be described in cljc files for code sharing.
   (r/resource :star star-controller)
 ```
 
-Middleware бывают 3х типов:
-* middleware применяется ко всем экшенам и обработчикам, включая вложенные
-* collection-middleware применятеся только для index, new и create
-* member-middleware применяется к show, edit, update, put, delete и всем вложенным обработчикам,
-  подробнее можно посмотреть [тут](test/darkleaf/router/use_cases/member_middleware_test.cljc).
+There are 3 types of middlewares:
 
-Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
+* `middleware` applied to all action handlers including nested.
+* `collection-middleware` applied only to index, new and create actions.
+* `member-middleware` applied to show, edit, update, put, delete and all nested handlers, look
+  [here](test/darkleaf/router/use_cases/member_middleware_test.cljc) for details.
+
+Please see [test](test/darkleaf/router/resources_test.cljc) for all examples.
 
 ## Resource
 
@@ -162,8 +155,7 @@ Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive exampl
 
 ## Group
 
-Объединяет несколько роутов в один.
-Опционально добавляет middleware.
+This function combines multiple routes into one and applies optional middleware.
 
 ``` clojure
 (def posts-controller {:show (fn [req] (response "show post resp"))})
@@ -218,8 +210,7 @@ Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 ## Mount
 
-Позволяет примонтировать изолированное приложение.
-Внутренний request-for работает относительно точки монтирования.
+This function allows to mount isolated applications. `request-for` inside `request` map works regarding the mount point.
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
@@ -244,10 +235,10 @@ Please see [test](test/darkleaf/router/mount_test.cljc) for exhaustive examples.
 
 ## Pass
 
-Передает любой запрос в текущей области в обработчик.
-Внутренние сегменты доступны как `(-> req ::r/params :segments)`.
-Экшен задается request-method.
-Может использоваться для задания специальной страницы 404 для текущей области.
+Passes any request in the current scope to a specified handler.
+Inner segments are available as `(-> req ::r/params :segments)`.
+Action name is provided by request-method.
+It can be used for creating custom 404 page for current scope.
 
 ```clojure
 (defn handler (fn [req] (response "dashboard")))
@@ -296,7 +287,7 @@ Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for ex
 
 ## Async
 
-Имеется поддержка [ассинхронных обработчиков ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html).
+[Asynchronous ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html) handlers support.
 
 ``` clojure
 (def pages-controller {:index (fn [req resp raise]
@@ -335,30 +326,28 @@ for exhaustive examples.
   :req {:uri "/people{/%3Aperson}", :request-method :get}}]
 ```
 
-Удобно использовать для:
- + наглядного отображения структуры роутинга
- + поиска ошибок
- + кроссплатформенной сериализации роутинга
- + построения документации
+It useful for:
 
-Для шаблонизации используется [URI Template](https://tools.ietf.org/html/rfc6570).
-Т.к. clojure keywords содержат запрещенные символы,
-поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
-Соответствие параметров шаблона и :params задается через :params-kmap.
++ inspection routing structure
++ mistakes detection
++ cross-platform routes serialization
++ documentation generation
+
+[URI Template](https://tools.ietf.org/html/rfc6570) uses for templating.
+Url encode is applied for ability to use keywords as a template variable
+because of the fact that clojure keywords contains forbidden symbols.
+Template parameters and :params mapping is set with :params-kmap.
 
 ## HTML
 
-HTML не умеет ничего кроме GET и POST.
-Что бы отправить форму с помощью PUT, PATCH или DELETE
-нужно добавить в форму скрытое поле `_method` со значением `put`, `patch` или `delete`.
-Также необходимо обернуть обработчик с помощью
-`darkleaf.router.html.method-override/wrap-method-override`.
-Use it with `ring.middleware.params/wrap-params`
-and `ring.middleware.keyword-params/wrap-keyword-params`.
+HTML doesn’t support HTTP methods except GET и POST.
+You need to add the hidden field _method with put, patch or delete value to send PUT, PATCH or DELETE request.
+It is also necessary to wrap a handler with `darkleaf.router.html.method-override/wrap-method-override`.
+Use it with `ring.middleware.params/wrap-params` and `ring.middleware.keyword-params/wrap-keyword-params`.
 
-См. [примеры](test/darkleaf/router/html/method_override_test.cljc).
+Please see [examples](test/darkleaf/router/html/method_override_test.cljc).
 
-В будущих релизах планирую добавить js код для отправки произвольных запросов с помощью html ссылок.
+In future releases I'm going to add js code for arbitrary request sending using html links.
 
 ## Questions
 
