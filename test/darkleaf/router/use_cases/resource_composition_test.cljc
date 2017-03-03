@@ -9,7 +9,7 @@
 ;; In this case it is necessary to add actions for completed form.
 ;; Controller grows and becomes complicated fast with this approach.
 
-;; In cases like that recommended to use nested resources
+;; In cases like that it is recommended to use nested resources
 ;; instead of adding extra actions to controller.
 
 ;; In this library there is only the one way to implement this requirement:

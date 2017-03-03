@@ -16,7 +16,7 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 
 ## Use cases
 
-* [resource compostion / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
+* [resource composition / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
 * [member middleware](test/darkleaf/router/use_cases/member_middleware_test.cljc)
 * [extending / domain constraint](test/darkleaf/router/use_cases/domain_constraint_test.cljc)
 
@@ -32,7 +32,7 @@ There are some downsides of this approach.
 3. Inability to mount an external application. Inability to create html links related with mount point.
 4. Inability to serialize routing and use it in other external applications for request forming.
 
-Most of these problems are solved in [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
+Most of these problems are solved in [Ruby on Rails](http://guides.rubyonrails.org/routing.html).
 
 1. If you know the action, controller name and parameters, you can get url, for example: edit_admin_post_path(@post.id).
 2. You can use rest resources to describe routing.
@@ -41,15 +41,15 @@ Most of these problems are solved in [Ruby on Rails](http://guides.rubyonrails.o
    that makes your code unlean later.
 3. There is an engine support. For example, you can mount a forum engine into your project or
    decompose your application into several engines.
-4. There is an API for routes traversing, which uses rake routes. The library
+4. There is an API for routes traversing, which uses `rake routes` command. The library
    [js-routes](https://github.com/railsware/js-routes) brings url helpers in js.
 
-Solutions with my library.
+Solution my library suggests.
 
 1. Knowing action, scope and params, we can get the request, which invokes the handler of this route:
    `(request-for :edit [:admin :post] {:post "1"})`.
-2. The main abstraction is the rest resource. Controller contains only standard actions. How to deal with it you can see
-   in [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
+2. The main abstraction is the rest resource. Controller contains only standard actions.
+   You can see [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc) how to deal with it.
 3. Ability to mount an external application. See [example](#mount) for details.
 4. The library interface is identical in clojure and clojurecript, that allows to share the code between server and
    client using .cljc files. You can also export routing description with cross-platform templates as a simple data
@@ -155,7 +155,7 @@ Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive exampl
 
 ## Group
 
-This function combines multiple routed into one and apply optional middleware.
+This function combines multiple routes into one and applies optional middleware.
 
 ``` clojure
 (def posts-controller {:show (fn [req] (response "show post resp"))})
@@ -210,9 +210,7 @@ Please see [test](test/darkleaf/router/guard_test.cljc) for exhaustive examples.
 
 ## Mount
 
-This function mount an isolated application.
-
-Allows to mount isolated applications. `request-for` inside `request` map works regarding the mount point.
+This function allows to mount isolated applications. `request-for` inside `request` map works regarding the mount point.
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
@@ -328,11 +326,12 @@ for exhaustive examples.
   :req {:uri "/people{/%3Aperson}", :request-method :get}}]
 ```
 
-Useful for:
- + inspection routing structure
- + mistakes detection
- + cross-platform routes serialization
- + documentation generation
+It useful for:
+
++ inspection routing structure
++ mistakes detection
++ cross-platform routes serialization
++ documentation generation
 
 [URI Template](https://tools.ietf.org/html/rfc6570) uses for templating.
 Url encode is applied for ability to use keywords as a template variable
@@ -348,7 +347,7 @@ Use it with `ring.middleware.params/wrap-params` and `ring.middleware.keyword-pa
 
 Please see [examples](test/darkleaf/router/html/method_override_test.cljc).
 
-In future releases I am going to add js code for arbitrary request sending using html links.
+In future releases I'm going to add js code for arbitrary request sending using html links.
 
 ## Questions
 
