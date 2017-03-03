@@ -25,7 +25,12 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 Библиотеки роутинга на всех языках работают одинаково: они только сопоставляют uri с обработчиком с помощью шаблонов.
 Например compojure, sinatra, express.js, cowboy.
 
+Routing libraries work similarly on all programming languages: they only map uri with a handler using templates.
+For example compojure, sinatra, express.js, cowboy.
+
 Недостатки такого подхода:
+
+There are some downsides of this approach.
 
 1. Нет обратного роутинга или именованного роутинга. Url задается в шаблонах с помощью строк.
 2. Отсутствует структура.
@@ -35,7 +40,16 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
    т.к. плагин не может создать внутреннюю ссылку относительно точки монтирования.
 4. Невозможно сериализовать роутинг и использовать его в других системах для формирования запросов.
 
+1. No reverse or named routing. Url is set in templates as a string.
+2. Absence of structure. Libraries do not offer any ways of code structure, that results of chaos in url and 
+   (spaghettii-code / unclean code).
+3. Inability to mount an external application due to plugin inability to create the inner (reference / link) related
+   with mount point.
+4. Inability to serialize routing and use it in other external applications for request forming.
+
 Большинство этих проблем решены в [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
+
+Most of these problems are solved in [Ruby on Rails](http://guides.rubyonrails.org/routing.html):
 
 1. Зная экшен, название контроллера и параметры можно получить url, например так: `edit_admin_post_path(@post.id)`.
 2. Предлагается использовать rest ресурсы для описания роутинга.
@@ -47,7 +61,18 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 4. Есть апи обхода роутов, который использует `rake routes`.
    Библиотека [js-routes](https://github.com/railsware/js-routes) пробрасывает url helpers в js.
 
+1. If you know the action, controller name and parameters, you can get url, for example: edit_admin_post_path(@post.id).
+2. You can use rest resources (to describe routing / for routing description). Actions of controllers
+   (match / correspond) to handlers. However, framework allows to add (non-standart / not built-in) actions into
+   controller, that transforms your code into (spaghetti-code later / unclean code) later.
+3. There is an engine (compatibility / support). For example, you can mount a forum engine into your project or
+   (split / subdivide / decompose / separate) your application.
+4. There is an API for routes traversing, which uses rake routes. The library
+   [js-routes](https://github.com/railsware/js-routes) (brings / transfers / forwards) url helpers in js.
+
 Решение с помощью моей библиотеки:
+
+Solution my library (offers / suggests).
 
 1. Зная action, scope и params можно получить запрос,
    который вызовет обработчик этого роута: `(request-for :edit [:admin :post] {:post "1"})`.
@@ -59,6 +84,15 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
    что позволяет разделять код между сервером и клиентом с помощью сljc.
    Также можно экспортировать описание роутинга
    в виде простых структур данных с использованием кроссплатформенных шаблонов, см. [пример](#explain).
+
+1. Knowing action, scope and params, we can get a request, which (invokes / calls) the handler of this route:
+   (request-for :edit [:admin :post] {:post "1"}).
+2. The main abstraction is the rest resource. Controller contains only standard actions. How to deal with it you can see
+   in [resource composition](test/darkleaf/router/use_cases/resource_composition_test.cljc).
+3. Ability to mount an external application. See [example](#mount) for details.
+4. The library interface is identical in clojure and clojurecript, that allows to share the code between server and
+   client using .cljc files. You can also export routing description with cross-platform templates as a simple data
+   structure. See [example](#explain) for details.
 
 ## Resources
 
@@ -110,10 +144,18 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 ```
 
 There are several types of middlewares:
+
+There are 3 types of middleware:
+
 * `middleware` применяется ко всем экшенам и обработчикам, включая вложенные
 * `collection-middleware` применятеся только для index, new и create
 * `member-middleware` применяется к show, edit, update, put, delete и всем вложенным обработчикам,
   подробнее можно посмотреть [тут](test/darkleaf/router/use_cases/member_middleware_test.cljc).
+
+* `middleware` applied to all action handlers including nested.
+* `collection-middleware` applied only to index, new and create actions.
+* `member-middleware` applied to show, edit, update, put, delete and all nested handlers, look
+  [here](test/darkleaf/router/use_cases/member_middleware_test.cljc) for details.
 
 Please see [test](test/darkleaf/router/resources_test.cljc) for exhaustive examples.
 
@@ -220,6 +262,7 @@ This function mount an isolated application.
 "request-for" from a request map concern the mount point.
 Внутренний request-for работает относительно точки монтирования.
 
+Allows to mount isolated applications. Inner "request-for" works regarding the mount point.
 
 ```clojure
 (def dashboard-app (r/resource :dashboard/main dashboard-controller :segment false))
@@ -248,6 +291,10 @@ This function pass any request to handler.
 Внутренние сегменты доступны как `(-> req ::r/params :segments)`.
 Action complies request method.
 Useful for handle 404 errors.
+
+Passes any request in the current scope to a specified handler. Inner segments are available as
+(-> req ::r/params :segments). Action name is (defined / provided) by request-method. It can be used for creating custom
+404 page for current scope.
 
 ```clojure
 (defn handler (fn [req] (response "dashboard")))
@@ -341,10 +388,17 @@ Useful for:
  + cross-platform routes serialization
  + documentation generation
 
+(Convenient / Useful) for: 
+ + Inspection routing structure.
+
 It use [URI Template](https://tools.ietf.org/html/rfc6570).
 Т.к. clojure keywords содержат запрещенные символы,
 поэтому, что бы использовать keyword в качестве переменной шаблона, применятеся url encode.
 Соответствие параметров шаблона и :params задается через :params-kmap.
+
+[URI Template](https://tools.ietf.org/html/rfc6570) uses for templating. Url encode is applied for ability to use
+keywords as a template variable because of the fact that clojure keywords contains (prohibited / forbidden) symbols.
+Template parameters and :params mapping is set with :params-kmap.
 
 ## HTML
 
@@ -356,9 +410,27 @@ This input can contain "put", "patch", "delete", etc.
 on `ring.middleware.params/wrap-params`
 and `ring.middleware.keyword-params/wrap-keyword-params`.
 
+HTML doesn’t support HTTP methods except GET и POST. You need to add the hidden field _method with put, patch or delete
+value to send PUT, PATCH or DELETE request. It is also necessary to wrap a handler with
+darkleaf.router.html.method-override/wrap-method-override. Use it with ring.middleware.params/wrap-params and
+ring.middleware.keyword-params/wrap-keyword-params.
+
 Please see [examples](test/darkleaf/router/html/method_override_test.cljc).
 
 В будущих релизах планирую добавить js код для отправки произвольных запросов с помощью html ссылок.
+In future releases I am going to add js code for (custom / arbitrary) request sending using html links.
+
+## 6
+<!-- 6 пункт я и на русском не понял -->
+
+There is a Project resource and it needs to be completed. 
+Supposed project should have the “complete” action.
+Some time later a new requirement is obtained: there must be the form for data specifying while project completes.
+In this case it is necessary to add “show completed application form”.
+Controller grows and becomes complicated fast starting to controll few resources with this approach.
+Recommended to use nested resources instead of adding extra actions to controller.
+In this example there is only the one way to implement it: Project resource contains nested (Completing / Completion)
+resource and create action of a Completing resource invokes.
 
 ## Questions
 
