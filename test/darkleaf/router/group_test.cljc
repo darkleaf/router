@@ -4,8 +4,10 @@
             [darkleaf.router.test-helpers :refer [route-testing make-middleware]]))
 
 (deftest defaults
-  (let [posts-controller {:show (fn [req] "show post resp")}
-        news-controller {:show (fn [req] "show news resp")}
+  (let [posts-controller (r/controller
+                           (show [req] "show post resp"))
+        news-controller (r/controller
+                          (show [req] "show news resp"))
         routes (r/group
                  (r/resources :posts :post posts-controller)
                  (r/resources :news :news news-controller))]
@@ -19,7 +21,8 @@
                    :response "show news resp")))
 
 (deftest middleware
-  (let [pages-controller {:index (fn [req] "index resp")}
+  (let [pages-controller (r/controller
+                           (index [req] "index resp"))
         routes (r/group :middleware (make-middleware "wrapper")
                  (r/resources :pages :page pages-controller))
         handler (r/make-handler routes)

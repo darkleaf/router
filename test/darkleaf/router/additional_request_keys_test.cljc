@@ -3,8 +3,9 @@
             [darkleaf.router :as r]))
 
 (deftest request-keys
-  (let [pages-controller {:index (fn [req] "index resp")
-                          :show (fn [req] req)}
+  (let [pages-controller (r/controller
+                           (index [req] "index resp")
+                           (show [req] req))
         pages (r/resources :pages :page pages-controller)
         handler (r/make-handler pages)
         returned-req (handler {:uri "/pages/1", :request-method :get})]

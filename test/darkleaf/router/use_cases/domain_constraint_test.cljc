@@ -20,8 +20,10 @@
       (DomainConstraint. name)))
 
 (deftest usage
-  (let [main-pages-controller {:index (fn [req] "main pages")}
-        shop-pages-controller {:index (fn [req] "shop pages")}
+  (let [main-pages-controller (r/controller
+                                (index [req] "main pages"))
+        shop-pages-controller (r/controller
+                                (index [req] "shop pages"))
         routes (r/group
                  (domain :main "cool-site.com"
                    (r/resources :pages :page main-pages-controller))

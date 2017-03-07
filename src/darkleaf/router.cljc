@@ -14,6 +14,19 @@
      `(doto (def ~name ~orig)
         (alter-meta! merge (meta (var ~orig))))))
 
+(defmacro controller
+  {:style/indent [:defn [1]]}
+  [& actions]
+  (reduce (fn [acc [action-name & fn-args]]
+            (assoc acc (keyword action-name) `(fn ~@fn-args)))
+          {}
+          actions))
+
+(defmacro defcontroller
+  {:style/indent [1 :defn [1]]}
+  [controller-name & actions]
+  `(def ~controller-name (controller ~@actions)))
+
 (defalias group group-impl/group)
 (defalias section section-impl/section)
 (defalias guard guard-impl/guard)
