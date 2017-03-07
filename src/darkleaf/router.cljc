@@ -22,6 +22,11 @@
           {}
           actions))
 
+(defmacro defcontroller
+  {:style/indent [1 :defn [1]]}
+  [controller-name & actions]
+  `(def ~controller-name (controller ~@actions)))
+
 (defalias group group-impl/group)
 (defalias section section-impl/section)
 (defalias guard guard-impl/guard)
