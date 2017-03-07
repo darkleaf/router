@@ -74,18 +74,29 @@ Solution my library suggests.
             [ring.util.response :refer [response]]))
 
 ;; all keys are optional
-(def pages-controller
-  {:middleware            (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
-   :collection-middleware (fn [h] (fn [req] (h req)))
-   :member-middleware     (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
-   :index   (fn [req] (response "index resp"))
-   :show    (fn [req] (response "show resp"))
-   :new     (fn [req] (response "new resp"))
-   :create  (fn [req] (response "create resp"))
-   :edit    (fn [req] (response "edit resp"))
-   :update  (fn [req] (response "update resp"))
-   :put     (fn [req] (response "put resp"))
-   :destroy (fn [req] (response "destroy resp"))})
+(r/defcontroller pages-controller
+  (middleware [h]
+    (fn [req] (h req)))
+  (collection-middleware [h]
+    (fn [req] (h req)))
+  (member-middleware [h]
+    (fn [req] (h req)))
+  (index [req]
+    (response "index resp"))
+  (show [req]
+    (response "show resp"))
+  (new [req]
+    (response "new resp"))
+  (create [req]
+    (response "create resp"))
+  (edit [req]
+    (response "edit resp"))
+  (update [req]
+    (response "update resp"))
+  (put [req]
+    (response "put resp"))
+  (destroy [req]
+    (response "destroy resp")))
 
 ;; :index [:pages] {} -> /pages
 ;; :show [:page] {:page 1} -> /pages/1
@@ -127,15 +138,24 @@ Please see [test](test/darkleaf/router/resources_test.cljc) for all examples.
 
 ``` clojure
 ;; all keys are optional
-(def star-controller
-  {:middleware (fn [h] (fn [req] (h req))) ;; will be applied to nested routes too
-   :show    (fn [req] (response "show resp"))
-   :new     (fn [req] (response "new resp"))
-   :create  (fn [req] (response "create resp"))
-   :edit    (fn [req] (response "edit resp"))
-   :update  (fn [req] (response "update resp"))
-   :put     (fn [req] (response "put resp"))
-   :destroy (fn [req] (response "destroy resp"))})
+(r/defcontroller star-controller
+  ;; will be applied to nested routes too
+  (middleware [h]
+    (fn [req] (h req)))
+  (show [req]
+    (response "show resp"))
+  (new [req]
+    (response "new resp"))
+  (create [req]
+    (response "create resp"))
+  (edit [req]
+    (response "edit resp"))
+  (update [req]
+    (response "update resp"))
+  (put [req]
+    (response "put resp"))
+  (destroy [req]
+    (response "destroy resp")))
 
 ;; :show [:star] {} -> /star
 (r/resource :star star-controller)
@@ -158,8 +178,10 @@ Please see [test](test/darkleaf/router/resource_test.cljc) for exhaustive exampl
 This function combines multiple routes into one and applies optional middleware.
 
 ``` clojure
-(def posts-controller {:show (fn [req] (response "show post resp"))})
-(def news-controller {:show (fn [req] (response "show news resp"))})
+(r/defcontroller posts-controller
+  (show [req] (response "show post resp")))
+(r/defcontroller news-controller
+  (show [req] (response "show news resp")))
 
 ;; :show [:post] {:post 1} -> /posts/1
 ;; :show [:news] {:news 1} -> /news/1
@@ -263,9 +285,11 @@ Please see [test](test/darkleaf/router/pass_test.cljc) for exhaustive examples.
 ## Helpers
 
 ``` clojure
-(def controller {:index (fn [req]
-                          (let [request-for (::r/request-for req)]
-                            (response (str (request-for :index [:pages] {})))))})
+(r/defcontroller controller
+  (index [req]
+    (let [request-for (::r/request-for req)]
+      (response (str (request-for :index [:pages] {}))))))
+
 (def pages (r/resources :pages :page controller))
 
 (def handler (r/make-handler pages))
@@ -290,8 +314,9 @@ Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for ex
 [Asynchronous ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html) handlers support.
 
 ``` clojure
-(def pages-controller {:index (fn [req resp raise]
-                                (future (resp response)))})
+(r/defcontroller pages-controller
+  (index [req resp raise]
+    (future (resp response))))
 
 (def pages (r/resources :pages :page pages-controller))
 (def handler (r/make-handler pages))
@@ -309,8 +334,10 @@ for exhaustive examples.
 ## Explain
 
 ```clojure
-(def people-controller {:index (fn [req] (response "index"))
-                        :show (fn [req] (response "show"))})
+(r/defcontroller people-controller
+  (index [req] (response "index"))
+  (show [req] (response "show")))
+
 (def routes (r/resources :people :person people-controller))
 (pprint (r/explain routes))
 ```
