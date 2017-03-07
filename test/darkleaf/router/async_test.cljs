@@ -5,9 +5,10 @@
 
 (deftest async-handler
   (async done
-         (let [pages-controller {:index (fn [req resp raise]
-                                          (nextTick #(resp "index resp"))
-                                          :something)}
+         (let [pages-controller (r/controller
+                                  (index [req resp raise]
+                                    (nextTick #(resp "index resp"))
+                                    :something))
                pages (r/resources :pages :page pages-controller)
                handler (r/make-handler pages)
                test-req {:uri "/pages", :request-method :get}

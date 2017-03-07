@@ -4,11 +4,11 @@
             [darkleaf.router.test-helpers :refer [route-testing make-middleware]]))
 
 (deftest with-segment
-  (let [dashboard-controller {:show
-                              (fn [req]
-                                (let [request-for (::r/request-for req)]
-                                  (str "dashboard url: "
-                                       (:uri (request-for :show [:dashboard/main] {})))))}
+  (let [dashboard-controller (r/controller
+                               (show [req]
+                                 (let [request-for (::r/request-for req)]
+                                   (str "dashboard url: "
+                                        (:uri (request-for :show [:dashboard/main] {}))))))
         dashboard (r/resource :dashboard/main dashboard-controller :segment false)
         routes (r/group
                  (r/section :admin
@@ -25,7 +25,8 @@
                    :response "dashboard url: /en/dashboard")))
 
 (deftest without-segment
-  (let [dashboard-controller {:show (fn [req] "dashboard")}
+  (let [dashboard-controller (r/controller
+                               (show [req] "dashboard"))
         dashboard (r/resource :dashboard/main dashboard-controller :segment false)]
     (for [routes [(r/mount dashboard)
                   (r/mount dashboard :segment false)]]
@@ -35,12 +36,12 @@
                      :response "dashboard"))))
 
 (deftest middleware
-  (let [forum-topics-controller {:show
-                                 (fn [req]
-                                   (str "topic "
-                                        (-> req ::r/params :forum/topic)
-                                        " inside "
-                                        (-> req :forum/scope)))}
+  (let [forum-topics-controller (r/controller
+                                  (show [req]
+                                    (str "topic "
+                                         (-> req ::r/params :forum/topic)
+                                         " inside "
+                                         (-> req :forum/scope))))
         forum (r/resources :forum/topics :forum/topic forum-topics-controller)
 
         sites-controller {}

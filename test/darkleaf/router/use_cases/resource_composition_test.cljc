@@ -16,10 +16,12 @@
 ;; project resource must contains nested completion resource.
 
 (deftest usage
-  (let [projects-controller {:index (fn [req] "projects list")
-                             :show (fn [req] "project page")}
-        project-completion-controller {:new (fn [req] "completion form")
-                                       :create (fn [req] "successfully completed")}
+  (let [projects-controller (r/controller
+                              (index [req] "projects list")
+                              (show [req] "project page"))
+        project-completion-controller (r/controller
+                                        (new [req] "completion form")
+                                        (create [req] "successfully completed"))
         routes (r/resources :projects :project projects-controller
                  (r/resource :completion project-completion-controller))]
     (testing "handler"

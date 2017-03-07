@@ -4,19 +4,23 @@
             [darkleaf.router.test-helpers :refer [route-testing make-middleware]]))
 
 (deftest defaults
-  (let [pages-controller {:index   (fn [req] "index resp")
-                          :new     (fn [req] "new resp")
-                          :create  (fn [req] "create resp")
-                          :show    (fn [req] (str "show "
-                                                  (-> req ::r/params :page)))
-                          :edit    (fn [req] (str "edit "
-                                                  (-> req ::r/params :page)))
-                          :update  (fn [req] (str "update "
-                                                  (-> req ::r/params :page)))
-                          :put     (fn [req] (str "put "
-                                                  (-> req ::r/params :page)))
-                          :destroy (fn [req] (str "destroy "
-                                                  (-> req ::r/params :page)))}
+  (let [pages-controller (r/controller
+                           (index [req]
+                             "index resp")
+                           (new [req]
+                             "new resp")
+                           (create [req]
+                             "create resp")
+                           (show [req]
+                             (str "show " (-> req ::r/params :page)))
+                           (edit [req]
+                             (str "edit " (-> req ::r/params :page)))
+                           (update [req]
+                             (str "update " (-> req ::r/params :page)))
+                           (put [req]
+                             (str "put " (-> req ::r/params :page)))
+                           (destroy [req]
+                             (str "destroy " (-> req ::r/params :page))))
         pages (r/resources :pages :page pages-controller)]
     (route-testing pages
                    :description [:index [:pages] {}]
@@ -52,14 +56,15 @@
                    :response "destroy about")))
 
 (deftest specific-segment
-  (let [people-controller {:index   (fn [req] "index resp")
-                           :show    (fn [req] "show resp")
-                           :new     (fn [req] "new resp")
-                           :create  (fn [req] "create resp")
-                           :edit    (fn [req] "edit resp")
-                           :update  (fn [req] "update resp")
-                           :put     (fn [req] "put resp")
-                           :destroy (fn [req] "destroy resp")}
+  (let [people-controller (r/controller
+                            (index   [req] "index resp")
+                            (show    [req] "show resp")
+                            (new     [req] "new resp")
+                            (create  [req] "create resp")
+                            (edit    [req] "edit resp")
+                            (update  [req] "update resp")
+                            (put     [req] "put resp")
+                            (destroy [req] "destroy resp"))
         people (r/resources :people :person people-controller
                  :segment "menschen")]
     (route-testing people
@@ -96,19 +101,23 @@
                    :response "destroy resp")))
 
 (deftest without-segment
-  (let [pages-controller {:index   (fn [req] "index resp")
-                          :new     (fn [req] "new resp")
-                          :create  (fn [req] "create resp")
-                          :show    (fn [req] (str "show "
-                                                  (-> req ::r/params :page)))
-                          :edit    (fn [req] (str "edit "
-                                                  (-> req ::r/params :page)))
-                          :update  (fn [req] (str "update "
-                                                  (-> req ::r/params :page)))
-                          :put     (fn [req] (str "put "
-                                                  (-> req ::r/params :page)))
-                          :destroy (fn [req] (str "destroy "
-                                                  (-> req ::r/params :page)))}
+  (let [pages-controller (r/controller
+                           (index [req]
+                             "index resp")
+                           (new [req]
+                             "new resp")
+                           (create [req]
+                             "create resp")
+                           (show [req]
+                             (str "show " (-> req ::r/params :page)))
+                           (edit [req]
+                             (str "edit " (-> req ::r/params :page)))
+                           (update [req]
+                             (str "update " (-> req ::r/params :page)))
+                           (put [req]
+                             (str "put " (-> req ::r/params :page)))
+                           (destroy [req]
+                             (str "destroy " (-> req ::r/params :page))))
         pages (r/resources :pages :page pages-controller, :segment false)]
     (route-testing pages
                    :description [:index [:pages] {}]
@@ -144,12 +153,16 @@
                    :response "destroy some")))
 
 (deftest nested
-  (let [pages-controller {:index (fn [req] "some")
-                          :show (fn [req] "pages show resp")}
-        comments-controller {:show (fn [req] "show resp")}
-        star-controller {:show (fn [req] (str "page "
-                                              (-> req ::r/params :page)
-                                              " star show resp"))}
+  (let [pages-controller (r/controller
+                           (index [req] "some")
+                           (show [req] "pages show resp"))
+        comments-controller (r/controller
+                              (show [req] "show resp"))
+        star-controller (r/controller
+                          (show [req]
+                            (str "page "
+                                 (-> req ::r/params :page)
+                                 " star show resp")))
         routes (r/resources :pages :page pages-controller
                  (r/resources :comments :comment comments-controller)
                  (r/resource :star star-controller))]
@@ -166,17 +179,21 @@
                    :response "page 1 star show resp")))
 
 (deftest middleware
-  (let [pages-controller {:middleware (make-middleware "pages")
-                          :collection-middleware (make-middleware "collection")
-                          :member-middleware (make-middleware "member")
-                          :index   (fn [req] "index resp")
-                          :show    (fn [req] "show resp")
-                          :new     (fn [req] "new resp")
-                          :create  (fn [req] "create resp")
-                          :edit    (fn [req] "edit resp")
-                          :update  (fn [req] "update resp")
-                          :put     (fn [req] "put resp")
-                          :destroy (fn [req] "destroy resp")}
+  (let [pages-controller (r/controller
+                           (middleware [handler]
+                             #(str "pages // " (handler %)))
+                           (collection-middleware [handler]
+                             #(str "collection // " (handler %)))
+                           (member-middleware [handler]
+                             #(str "member // " (handler %)))
+                           (index [req] "index resp")
+                           (show [req] "show resp")
+                           (new [req] "new resp")
+                           (create [req] "create resp")
+                           (edit [req] "edit resp")
+                           (update [req] "update resp")
+                           (put [req] "put resp")
+                           (destroy [req] "destroy resp"))
         star-controller {:middleware (make-middleware "star")
                          :show (fn [req] "show star resp")}
         routes (r/resources :pages :page pages-controller

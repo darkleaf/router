@@ -15,9 +15,10 @@
   (let [response {:status 200
                   :headers {}
                   :body "index resp"}
-        pages-controller {:index (fn [req resp raise]
-                                   (future
-                                     (resp response)))}
+        pages-controller (r/controller
+                           (index [req resp raise]
+                             (future
+                               (resp response))))
         pages (r/resources :pages :page pages-controller)
         handler (r/make-handler pages)]
     (testing-handler "found"

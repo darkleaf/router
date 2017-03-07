@@ -8,32 +8,32 @@
                                     "2" {:id "2", :name "web-site"}}}}}
         find-user (fn [id] (get-in db [:users id]))
         find-project (fn [user-id id] (get-in db [:users user-id :projects id]))
-        users-controller {:member-middleware
-                          (fn [h]
-                            (fn [req]
-                              (-> req
-                                  (assoc-in [:models :user]
-                                            (find-user (-> req ::r/params :user)))
-                                  (h))))
-                          :show (fn [req] (-> req :models :user :name))}
-        projects-controller {:member-middleware
-                             (fn [h]
-                               (fn [req]
-                                 (-> req
-                                     (assoc-in [:models :project]
-                                               (find-project (-> req :models :user :id)
-                                                             (-> req ::r/params :project)))
-                                     (h))))
-                             :index (fn [req]
-                                      (str "user name: "
-                                           (-> req :models :user :name)
-                                           "; "
-                                           "projects list"))
-                             :show (fn [req]
-                                     (str "user name: "
-                                          (-> req :models :user :name)
-                                          "; project: "
-                                          (-> req :models :project :name)))}
+        users-controller (r/controller
+                           (member-middleware [h]
+                             (fn [req]
+                               (-> req
+                                   (assoc-in [:models :user]
+                                             (find-user (-> req ::r/params :user)))
+                                   (h))))
+                           (show [req] (-> req :models :user :name)))
+        projects-controller (r/controller
+                              (member-middleware [h]
+                                (fn [req]
+                                  (-> req
+                                      (assoc-in [:models :project]
+                                                (find-project (-> req :models :user :id)
+                                                              (-> req ::r/params :project)))
+                                      (h))))
+                              (index [req]
+                                (str "user name: "
+                                     (-> req :models :user :name)
+                                     "; "
+                                     "projects list"))
+                              (show [req]
+                                (str "user name: "
+                                     (-> req :models :user :name)
+                                     "; project: "
+                                     (-> req :models :project :name))))
         routes (r/resources :users :user users-controller
                  (r/resources :projects :project projects-controller))]
     (testing "response"

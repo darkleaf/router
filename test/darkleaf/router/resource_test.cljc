@@ -4,13 +4,14 @@
             [darkleaf.router.test-helpers :refer [route-testing make-middleware]]))
 
 (deftest defaults
-  (let [star-controller {:show    (fn [req] "show resp")
-                         :new     (fn [req] "new resp")
-                         :create  (fn [req] "create resp")
-                         :edit    (fn [req] "edit resp")
-                         :update  (fn [req] "update resp")
-                         :put     (fn [req] "put resp")
-                         :destroy (fn [req] "destroy resp")}
+  (let [star-controller (r/controller
+                          (show [req] "show resp")
+                          (new [req] "new resp")
+                          (create [req] "create resp")
+                          (edit [req] "edit resp")
+                          (update [req] "update resp")
+                          (put [req] "put resp")
+                          (destroy [req] "destroy resp"))
         star (r/resource :star star-controller)]
     (route-testing star
                    :description [:new [:star] {}]
@@ -42,13 +43,14 @@
                    :response "destroy resp")))
 
 (deftest specificsegment
-  (let [star-controller {:show    (fn [req] "show resp")
-                         :new     (fn [req] "new resp")
-                         :create  (fn [req] "create resp")
-                         :edit    (fn [req] "edit resp")
-                         :update  (fn [req] "update resp")
-                         :put     (fn [req] "put resp")
-                         :destroy (fn [req] "destroy resp")}
+  (let [star-controller (r/controller
+                          (show [req] "show resp")
+                          (new [req] "new resp")
+                          (create [req] "create resp")
+                          (edit [req] "edit resp")
+                          (update [req] "update resp")
+                          (put [req] "put resp")
+                          (destroy [req] "destroy resp"))
         star (r/resource :star star-controller :segment "estrella")]
     (route-testing star
                    :description [:new [:star] {}]
@@ -80,13 +82,14 @@
                    :response "destroy resp")))
 
 (deftest wihout-segment
-  (let [star-controller {:show    (fn [req] "show resp")
-                         :new     (fn [req] "new resp")
-                         :create  (fn [req] "create resp")
-                         :edit    (fn [req] "edit resp")
-                         :update  (fn [req] "update resp")
-                         :put     (fn [req] "put resp")
-                         :destroy (fn [req] "destroy resp")}
+  (let [star-controller (r/controller
+                          (show [req] "show resp")
+                          (new [req] "new resp")
+                          (create [req] "create resp")
+                          (edit [req] "edit resp")
+                          (update [req] "update resp")
+                          (put [req] "put resp")
+                          (destroy [req] "destroy resp"))
         star (r/resource :star star-controller :segment false)]
     (route-testing star
                    :description [:new [:star] {}]
@@ -119,7 +122,8 @@
 
 (deftest nested
   (let [star-controller {}
-        comments-controller {:show (fn [req] "show resp")}
+        comments-controller (r/controller
+                              (show [req] "show resp"))
         routes (r/resource :star star-controller
                  (r/resources :comments :comment comments-controller))]
     (route-testing routes
@@ -129,16 +133,20 @@
                    :response "show resp")))
 
 (deftest middleware
-  (let [star-controller {:middleware (make-middleware "star")
-                         :show    (fn [req] "show resp")
-                         :new     (fn [req] "new resp")
-                         :create  (fn [req] "create resp")
-                         :edit    (fn [req] "edit resp")
-                         :update  (fn [req] "update resp")
-                         :put     (fn [req] "put resp")
-                         :destroy (fn [req] "destroy resp")}
-        comments-controllers {:middleware (make-middleware "comments")
-                              :index (fn [req] "comments index")}
+  (let [star-controller (r/controller
+                          (middleware [handler]
+                            #(str "star // " (handler %)))
+                          (show [req] "show resp")
+                          (new [req] "new resp")
+                          (create [req] "create resp")
+                          (edit [req] "edit resp")
+                          (update [req] "update resp")
+                          (put [req] "put resp")
+                          (destroy [req] "destroy resp"))
+        comments-controllers (r/controller
+                               (middleware [handler]
+                                 #(str "comments // " (handler %)))
+                               (index [req] "comments index"))
         routes (r/resource :star star-controller
                  (r/resources :comments :comment comments-controllers))
         handler (r/make-handler routes)]
