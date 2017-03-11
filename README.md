@@ -312,6 +312,7 @@ Please see [test](test/darkleaf/router/additional_request_keys_test.cljc) for ex
 ## Async
 
 [Asynchronous ring](https://www.booleanknot.com/blog/2016/07/15/asynchronous-ring.html) handlers support.
+It also can be used in [macchiato-framework](https://github.com/macchiato-framework/examples/tree/master/auth-example-router).
 
 ``` clojure
 (r/defcontroller pages-controller
