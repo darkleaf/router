@@ -17,8 +17,8 @@
 (defmacro controller
   {:style/indent [:defn [1]]}
   [& actions]
-  (reduce (fn [acc [action-name & fn-args]]
-            (assoc acc (keyword action-name) `(fn ~@fn-args)))
+  (reduce (fn [acc [fn-name & fn-args]]
+            (assoc acc (keyword fn-name) `(fn ~fn-name ~@fn-args)))
           {}
           actions))
 

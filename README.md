@@ -73,7 +73,7 @@ Solution my library suggests.
   (:require [darkleaf.router :as r]
             [ring.util.response :refer [response]]))
 
-;; all keys are optional
+;; all items are optional
 (r/defcontroller pages-controller
   (middleware [h]
     (fn [req] (h req)))
@@ -137,7 +137,7 @@ Please see [test](test/darkleaf/router/resources_test.cljc) for all examples.
 | destroy | [:star] | {} | Delete | /star      | delete a specific star |
 
 ``` clojure
-;; all keys are optional
+;; all items are optional
 (r/defcontroller star-controller
   ;; will be applied to nested routes too
   (middleware [h]
