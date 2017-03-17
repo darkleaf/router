@@ -14,6 +14,27 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 | [bidi](https://github.com/juxt/bidi)                  | ✓ | ✓ | data/functions | ✓ |   | url      | route description data   | protocols |
 | [darkleaf/router](https://github.com/darkleaf/router) | ✓ | ✓ | functions      | ✓ | ✓ | resource | [explain data](#explain) | protocols |
 
+## Usage
+
+``` clojure
+(ns app.some-ns
+  (:require [darkleaf.router :as r]
+            [ring.util.response :refer [response]]))
+
+(r/defcontroller controller
+  (index [req]
+    (let [request-for (::r/request-for req)]
+      (response (str (request-for :index [:pages] {}))))))
+
+(def routing (r/resources :pages :page controller))
+
+(def handler (r/make-handler routing))
+(def request-for (r/make-request-for routing))
+
+(handler {:uri "/pages", :request-method :get}) ;; call index action from controller
+(request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
+```
+
 ## Use cases
 
 * [resource composition / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
@@ -281,23 +302,6 @@ It can be used for creating custom 404 page for current scope.
 ```
 
 Please see [test](test/darkleaf/router/pass_test.cljc) for exhaustive examples.
-
-## Helpers
-
-``` clojure
-(r/defcontroller controller
-  (index [req]
-    (let [request-for (::r/request-for req)]
-      (response (str (request-for :index [:pages] {}))))))
-
-(def pages (r/resources :pages :page controller))
-
-(def handler (r/make-handler pages))
-(def request-for (r/make-request-for pages))
-
-(handler {:uri "/pages", :request-method :get}) ;; call index action from controller
-(request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
-```
 
 ## Additional request keys
 
