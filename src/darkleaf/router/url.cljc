@@ -1,5 +1,5 @@
 (ns darkleaf.router.url
-  (:require [clojure.string :refer [replace]])
+  (:require [clojure.string :as str])
   #?(:clj (:import (java.net URLEncoder))))
 
 (defn- encode-impl [string]
@@ -10,4 +10,4 @@
   (some-> string
           (str)
           (encode-impl)
-          (replace "+" "%20")))
+          (str/replace "+" "%20")))
