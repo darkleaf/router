@@ -11,8 +11,14 @@
 
 #?(:clj
    (defmacro ^:private defalias [name orig]
-     `(doto (def ~name ~orig)
-        (alter-meta! merge (meta (var ~orig))))))
+     `(do
+        (def ~name ~orig)
+        (let [new-var# (var ~name)
+              orig-var# (var ~orig)]
+          ;; for cljs compiler with advanced optimizations
+          (when (and (some? new-var#) (some? orig-var#))
+            (alter-meta! new-var# merge (meta orig-var#)))
+          new-var#))))
 
 (defmacro controller
   {:style/indent [:defn [1]]}

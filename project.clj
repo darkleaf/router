@@ -14,4 +14,11 @@
                                    :target :nodejs
                                    :output-to "target/testable.js"
                                    :output-dir "target"
+                                   :main darkleaf.test-runner}}
+                       {:id "test-advanced"
+                        :source-paths ["test" "src"]
+                        :compiler {:optimizations :advanced
+                                   :target :nodejs
+                                   :output-to "target/testable.js"
+                                   :output-dir "target"
                                    :main darkleaf.test-runner}}]})

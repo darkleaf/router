@@ -1,2 +1,2 @@
 language: clojure
-script: lein do test, doo node test once
+script: lein do test, doo node test once, doo node test-advanced once
