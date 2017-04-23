@@ -1,0 +1,17 @@
+version: '3'
+services:
+  app:
+    build: .
+    command: >
+      lein update-in :plugins into
+      "[[cider/cider-nrepl \"0.15.0-SNAPSHOT\"]
+        [refactor-nrepl \"2.3.0-SNAPSHOT\"]]"
+      --
+      repl :headless
+    environment:
+      - LEIN_REPL_HOST=0.0.0.0
+      - LEIN_REPL_PORT=40000
+    ports:
+      - "40000:40000"
+    volumes:
+      - .:/usr/src/app
