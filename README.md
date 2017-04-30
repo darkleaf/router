@@ -93,12 +93,12 @@ Multiple routing namespaces:
 
 (def routes
   (r/group
-     main/routes
-     session/routes
-     account/routes
-     users/routes
-     projects/routes
-     tasks/routes))
+    main/routes
+    session/routes
+    account/routes
+    users/routes
+    projects/routes
+    tasks/routes))
 ```
 
 ## Use cases
