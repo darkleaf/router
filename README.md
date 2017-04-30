@@ -35,6 +35,72 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
 ```
 
+Single routing namespace:
+``` clojure
+(ns app.routing
+  (:require
+   [darkleaf.router :as r]
+   [app.controllers.main :as main]
+   [app.controllers.session :as session]
+   [app.controllers.account.invites :as account.invites]
+   [app.controllers.users :as users]
+   [app.controllers.users.statistics :as users.statistics]
+   [app.controllers.users.pm-bonus :as users.pm-bonus]
+   [app.controllers.projects :as projects]
+   [app.controllers.projects.status :as projects.status]
+   [app.controllers.projects.completion :as projects.completion]
+   [app.controllers.tasks :as tasks]
+   [app.controllers.tasks.status :as tasks.status]
+   [app.controllers.tasks.comments :as tasks.comments]))
+   
+(def routes
+  (r/group
+    (r/resource :main main/controller :segment false)
+    (r/resource :session session/controller)
+    (r/section :account
+      (r/resources :invites :invite account.invites/controller)) 
+    (r/resources :users :user users/controller
+      (r/resource :statistics users.statistics/controller)
+      (r/resource :pm-bonus users.pm-bonus/controller))
+    (r/resources :projects :project projects/controller
+      (r/resource :status projects.status/controller)
+      (r/resource :completion projects.completion/controller))
+    (r/resources :tasks :task tasks/controller
+      (r/resource :status tasks.status/controller)
+      (r/resources :comments tasks.comments/controller))))
+```
+
+Multiple routing namespaces:
+``` clojure
+(ns app.routes.main
+  (:require
+   [darkleaf.router :as r]))
+
+(r/defcontroller controller
+  (show [req] ...))
+
+(def routes (r/resource :main main-controller :segment false))
+
+(ns app.routes
+  (:require
+   [darkleaf.router :as r]
+   [app.routes.main :as main]
+   [app.routes.session :as session]
+   [app.routes.account :as account]
+   [app.routes.users :as users]
+   [app.routes.projects :as projects]
+   [app.routes.tasks :as tasks]))
+
+(def routes
+  (r/group
+    main/routes
+    session/routes
+    account/routes
+    users/routes
+    projects/routes
+    tasks/routes))
+```
+
 ## Use cases
 
 * [resource composition / additional controller actions](test/darkleaf/router/use_cases/resource_composition_test.cljc)
