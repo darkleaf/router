@@ -16,7 +16,6 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 
 ## Usage
 
-Short example:
 ``` clojure
 (ns app.some-ns
   (:require [darkleaf.router :as r]
@@ -36,31 +35,42 @@ Short example:
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
 ```
 
-Single routing namespace example:
+Single routing namespace:
 ``` clojure
 (ns app.routing
   (:require
    [darkleaf.router :as r]
-   (comment "a lot of controllers")))
+   [app.controllers.main :as main]
+   [app.controllers.session :as session]
+   [app.controllers.account.invites :as account.invites]
+   [app.controllers.users :as users]
+   [app.controllers.users.statistics :as users.statistics]
+   [app.controllers.users.pm-bonus :as users.pm-bonus]
+   [app.controllers.projects :as projects]
+   [app.controllers.projects.status :as projects.status]
+   [app.controllers.projects.completion :as projects.completion]
+   [app.controllers.tasks :as tasks]
+   [app.controllers.tasks.status :as tasks.status]
+   [app.controllers.tasks.comments :as tasks.comments]))
    
 (def routes
   (r/group
-    (r/resource :main main-controller :segment false)
-    (r/resource :session session-controller)
+    (r/resource :main main/controller :segment false)
+    (r/resource :session session/controller)
     (r/section :account
-      (r/resources :invites :invite account-invites-controller)) 
-    (r/resources :users :user users-controller
-      (r/resource :statistics user-statistics-controller)
-      (r/resource :pm-bonus user-pm-bonus-controller))
-    (r/resources :projects :project projects-controller
-      (r/resource :status project-status-controller)
-      (r/resource :completion project-completion-controller))
-    (r/resources :tasks :task tasks-controller
-      (r/resource :status task-status-controller)
-      (r/resources :comments task-comments-controller))))
+      (r/resources :invites :invite account.invites/controller)) 
+    (r/resources :users :user users/controller
+      (r/resource :statistics users.statistics/controller)
+      (r/resource :pm-bonus users.pm-bonus/controller))
+    (r/resources :projects :project projects/controller
+      (r/resource :status projects.status/controller)
+      (r/resource :completion projects.completion/controller))
+    (r/resources :tasks :task tasks/controller
+      (r/resource :status tasks.status/controller)
+      (r/resources :comments tasks.comments/controller))))
 ```
 
-Multiple routing namespaces example:
+Multiple routing namespaces:
 ``` clojure
 (ns app.routes.main
   (:require
@@ -75,7 +85,11 @@ Multiple routing namespaces example:
   (:require
    [darkleaf.router :as r]
    [app.routes.main :as main]
-   ...))
+   [app.routes.session :as session]
+   [app.routes.account :as account]
+   [app.routes.users :as users]
+   [app.routes.projects :as projects]
+   [app.routes.tasks :as tasks]))
 
 (def routes
   (r/group
