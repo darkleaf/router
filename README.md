@@ -16,6 +16,7 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 
 ## Usage
 
+Short example:
 ``` clojure
 (ns app.some-ns
   (:require [darkleaf.router :as r]
@@ -33,6 +34,56 @@ Bidirectional RESTfull Ring router for clojure and clojurescript.
 
 (handler {:uri "/pages", :request-method :get}) ;; call index action from controller
 (request-for :index [:pages] {}) ;; returns {:uri "/pages", :request-method :get}
+```
+
+Single routing namespace example:
+``` clojure
+(ns app.routing
+  (:require
+   (comment "a lot of controllers")))
+   
+(def routes
+  (r/group
+    (r/resource :main main-controller :segment false)
+    (r/resource :session session-controller)
+    (r/section :account
+      (r/resources :invites :invite account-invites-controller)) 
+    (r/resources :users :user users-controller
+      (r/resource :statistics user-statistics-controller)
+      (r/resource :pm-bonus user-pm-bonus-controller))
+    (r/resources :projects :project projects-controller
+      (r/resource :status project-status-controller)
+      (r/resource :completion project-completion-controller))
+    (r/resources :tasks :task tasks-controller
+      (r/resource :status task-status-controller)
+      (r/resources :comments task-comments-controller))))
+```
+
+Multiple routing namespaces example:
+``` clojure
+(ns app.routes.main
+  (:require
+   [darkleaf.router :as r]))
+
+(r/defcontroller controller
+  (show [req] ...))
+
+(def routes (r/resource :main main-controller :segment false))
+
+(ns app.routes
+  (:require
+   [darkleaf.router :as r]
+   [app.routes.main :as main]
+   ...))
+
+(def routes
+  (r/group
+     main/routes
+     session/routes
+     account/routes
+     users/routes
+     projects/routes
+     tasks/routes))
 ```
 
 ## Use cases
