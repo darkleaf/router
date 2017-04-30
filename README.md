@@ -40,6 +40,7 @@ Single routing namespace example:
 ``` clojure
 (ns app.routing
   (:require
+   [darkleaf.router :as r]
    (comment "a lot of controllers")))
    
 (def routes
